@@ -1,0 +1,257 @@
+/* Properties.css */
+.properties-page {
+  min-height: 100vh;
+  padding: 40px 0;
+  background-color: #f8f9fa;
+}
+
+.properties-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.properties-header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.properties-header p {
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.properties-results {
+  margin-top: 32px;
+}
+
+.results-header {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.results-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.results-header p {
+  color: #666;
+  font-size: 14px;
+}
+
+.properties-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.properties-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: #666;
+}
+
+.spinner-icon {
+  font-size: 3rem;
+  color: #007bff;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.properties-loading p {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.properties-error {
+  text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 16px;
+  margin: 40px auto;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.properties-error h2 {
+  color: #dc3545;
+  margin-bottom: 16px;
+}
+
+.properties-error p {
+  color: #666;
+  margin-bottom: 24px;
+}
+
+.no-properties {
+  text-align: center;
+  padding: 80px 20px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.no-properties-content h3 {
+  font-size: 1.8rem;
+  color: #666;
+  margin-bottom: 16px;
+}
+
+.no-properties-content p {
+  color: #888;
+  margin-bottom: 32px;
+  font-size: 1.1rem;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 40px;
+  flex-wrap: wrap;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 8px;
+}
+
+.page-btn {
+  background: white;
+  border: 2px solid #e9ecef;
+  color: #666;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  min-width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-btn:hover {
+  border-color: #007bff;
+  color: #007bff;
+  background-color: #f8f9ff;
+}
+
+.page-btn.active {
+  background-color: #007bff;
+  border-color: #007bff;
+  color: white;
+}
+
+.pagination .btn {
+  min-width: 100px;
+}
+
+.pagination .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .properties-page {
+    padding: 20px 0;
+  }
+  
+  .properties-header {
+    margin-bottom: 24px;
+  }
+  
+  .properties-header h1 {
+    font-size: 2rem;
+  }
+  
+  .properties-header p {
+    font-size: 1.1rem;
+  }
+  
+  .properties-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+  
+  .results-header {
+    margin-bottom: 24px;
+  }
+  
+  .results-header h2 {
+    font-size: 1.3rem;
+  }
+  
+  .pagination {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .page-numbers {
+    order: 2;
+  }
+  
+  .pagination .btn {
+    min-width: 120px;
+  }
+  
+  .no-properties {
+    padding: 60px 20px;
+  }
+  
+  .no-properties-content h3 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .properties-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .page-numbers {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .page-btn {
+    min-width: 40px;
+    height: 40px;
+    padding: 6px 12px;
+  }
+}
+
+/* Animations */
+.properties-grid {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
