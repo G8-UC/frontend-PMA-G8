@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/layout/Navbar';
+import BrokerNotifications from './components/broker/BrokerNotifications';
 import Home from './pages/Home';
 import Properties from './pages/Properties';
 import Login from './pages/LoginNew';
@@ -17,6 +18,7 @@ function App() {
       <AuthProvider>
         <div className="App">
           <Navbar />
+          <BrokerNotifications />
           <main className="main-content">
             <Routes>
               <Route path="/" element={<Home />} />

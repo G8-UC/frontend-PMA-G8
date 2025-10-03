@@ -155,6 +155,99 @@
   font-weight: 500;
 }
 
+/* Price Conversion Styles */
+.price-conversions {
+  margin-top: 16px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.conversion-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.conversion-label {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
+.conversion-value {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #28a745;
+}
+
+.uf-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #999;
+}
+
+.uf-value {
+  font-weight: 500;
+}
+
+.uf-date {
+  font-style: italic;
+}
+
+.uf-refresh {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+}
+
+.uf-refresh:hover {
+  background: #e3f2fd;
+  transform: rotate(180deg);
+}
+
+/* Visit Price UF Styles */
+.visit-price-uf {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.visit-price-uf .price-value.primary {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #007bff;
+}
+
+.visit-price-uf .price-value.secondary {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #28a745;
+}
+
+.visit-price-normal .price-value {
+  display: block;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #28a745;
+  margin-bottom: 4px;
+}
+
+.price-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #666;
+  font-size: 14px;
+}
+
 .property-features {
   display: flex;
   gap: 32px;
@@ -329,6 +422,161 @@
   color: #721c24;
 }
 
+/* Visit Information Styles */
+.visit-info {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 24px;
+  margin: 32px 0;
+  border: 1px solid #e9ecef;
+}
+
+.visit-availability h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16px;
+}
+
+.visit-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+
+.visit-count {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  border: 2px solid #007bff;
+  min-width: 120px;
+}
+
+.visit-count .count {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #007bff;
+  line-height: 1;
+}
+
+.visit-count .label {
+  font-size: 14px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.visit-price {
+  text-align: right;
+  flex: 1;
+}
+
+.visit-price .price-label {
+  display: block;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.visit-price .price-value {
+  display: block;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #28a745;
+  margin-bottom: 4px;
+}
+
+.visit-price .price-note {
+  display: block;
+  font-size: 12px;
+  color: #999;
+  font-style: italic;
+}
+
+/* Broker Status Styles */
+.broker-status {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.connection-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.connection-indicator.connected {
+  color: #28a745;
+}
+
+.connection-indicator.connecting {
+  color: #ffc107;
+}
+
+.connection-indicator.disconnected,
+.connection-indicator.error {
+  color: #dc3545;
+}
+
+.connection-indicator .icon {
+  font-size: 12px;
+}
+
+/* Alert Enhancements */
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.alert-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.alert-warning {
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  color: #856404;
+}
+
+/* Button Enhancements */
+.property-actions .btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.property-actions .btn:disabled:hover {
+  transform: none;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .visit-details {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .visit-price {
+    text-align: center;
+  }
+  
+  .broker-status {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .property-detail-content {
@@ -414,5 +662,27 @@
     font-size: 18px;
     bottom: 16px;
     right: 16px;
+  }
+  
+  /* Responsive Price Info */
+  .price-conversions {
+    padding: 12px;
+    margin-top: 12px;
+  }
+  
+  .conversion-value {
+    font-size: 1.1rem;
+  }
+  
+  .uf-info {
+    flex-wrap: wrap;
+  }
+  
+  .visit-price-uf .price-value.primary {
+    font-size: 1.2rem;
+  }
+  
+  .visit-price-uf .price-value.secondary {
+    font-size: 1rem;
   }
 }

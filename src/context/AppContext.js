@@ -27,6 +27,7 @@ const initialState = {
     hasMore: false,
     itemsPerPage: 25
   },
+  notifications: [], // Para notificaciones del broker
   loading: false,
   error: null
 };
@@ -130,6 +131,122 @@ function appReducer(state, action) {
         ...state,
         filters: initialState.filters,
         currentPage: 1
+      };
+
+    // Nuevos reducers para eventos del broker
+    case 'UPDATE_PROPERTIES_FROM_BROKER':
+      return {
+        ...state,
+        properties: action.payload,
+        filteredProperties: action.payload
+      };
+
+    case 'UPDATE_PROPERTY_VISITS':
+      return {
+        ...state,
+        properties: state.properties.map(property =>
+          property.id === action.payload.propertyId || property.url === action.payload.propertyId
+            ? { ...property, availableVisits: action.payload.availableVisits }
+            : property
+        ),
+        filteredProperties: state.filteredProperties.map(property =>
+          property.id === action.payload.propertyId || property.url === action.payload.propertyId
+            ? { ...property, availableVisits: action.payload.availableVisits }
+            : property
+        )
+      };
+
+    case 'RESERVE_VISIT_FROM_BROKER':
+      return {
+        ...state,
+        properties: state.properties.map(property => {
+          const matches = property.id === action.payload.propertyId || property.url === action.payload.propertyId;
+          if (matches) {
+            const currentVisits = property.availableVisits || 0;
+            return { 
+              ...property, 
+              availableVisits: Math.max(0, currentVisits - 1),
+              reservedBy: action.payload.groupId,
+              reservationId: action.payload.requestId
+            };
+          }
+          return property;
+        }),
+        filteredProperties: state.filteredProperties.map(property => {
+          const matches = property.id === action.payload.propertyId || property.url === action.payload.propertyId;
+          if (matches) {
+            const currentVisits = property.availableVisits || 0;
+            return { 
+              ...property, 
+              availableVisits: Math.max(0, currentVisits - 1),
+              reservedBy: action.payload.groupId,
+              reservationId: action.payload.requestId
+            };
+          }
+          return property;
+        })
+      };
+
+    case 'RELEASE_RESERVED_VISIT':
+      return {
+        ...state,
+        properties: state.properties.map(property => {
+          const matches = (property.id === action.payload.propertyId || property.url === action.payload.propertyId) 
+            && property.reservationId === action.payload.requestId;
+          if (matches) {
+            const { reservedBy, reservationId, ...cleanProperty } = property;
+            return { 
+              ...cleanProperty, 
+              availableVisits: (property.availableVisits || 0) + 1
+            };
+          }
+          return property;
+        }),
+        filteredProperties: state.filteredProperties.map(property => {
+          const matches = (property.id === action.payload.propertyId || property.url === action.payload.propertyId) 
+            && property.reservationId === action.payload.requestId;
+          if (matches) {
+            const { reservedBy, reservationId, ...cleanProperty } = property;
+            return { 
+              ...cleanProperty, 
+              availableVisits: (property.availableVisits || 0) + 1
+            };
+          }
+          return property;
+        })
+      };
+
+    case 'UPDATE_REQUEST_STATUS':
+      return {
+        ...state,
+        userRequests: state.userRequests.map(request =>
+          request.rental_id === action.payload.requestId || request.broker_request_id === action.payload.requestId
+            ? { 
+                ...request, 
+                status: action.payload.status,
+                validationData: action.payload.validationData,
+                updatedAt: new Date().toISOString()
+              }
+            : request
+        )
+      };
+
+    case 'ADD_NOTIFICATION':
+      const notifications = state.notifications || [];
+      return {
+        ...state,
+        notifications: [...notifications, {
+          id: Date.now(),
+          ...action.payload
+        }]
+      };
+
+    case 'REMOVE_NOTIFICATION':
+      return {
+        ...state,
+        notifications: (state.notifications || []).filter(notification => 
+          notification.id !== action.payload.notificationId
+        )
       };
 
     default:

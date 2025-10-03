@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAppContext } from '../context/AppContext';
+import { useBroker } from '../hooks/useBroker';
+import { useUFConverter } from '../hooks/useUFConverter';
 import { propertyService } from '../services/propertyService';
-import { FaBed, FaBath, FaRuler, FaMapMarkerAlt, FaCalendarAlt, FaArrowLeft, FaSpinner, FaExpand } from 'react-icons/fa';
+import { FaBed, FaBath, FaRuler, FaMapMarkerAlt, FaCalendarAlt, FaArrowLeft, FaSpinner, FaExpand, FaWifi, FaExclamationTriangle, FaSync } from 'react-icons/fa';
 import LoadingScreen from '../components/common/LoadingScreen';
 import ImageModal from '../components/common/ImageModal';
 import './PropertyDetail.css';
@@ -13,12 +15,20 @@ function PropertyDetail() {
   const navigate = useNavigate();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const { state, dispatch } = useAppContext();
+  const { isConnected, connectionStatus, sendPurchaseRequest, retryConnection, lastError } = useBroker();
+  const { ufValue, getPriceInfo, calculate10PercentInCLP, formatPrice: formatUFPrice, refreshUFValue } = useUFConverter();
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [renting, setRenting] = useState(false);
   const [rentSuccess, setRentSuccess] = useState(false);
   const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [brokerRequestInProgress, setBrokerRequestInProgress] = useState(false);
+  const [brokerError, setBrokerError] = useState('');
+  const [availableVisits, setAvailableVisits] = useState(null);
+  const [visitPrice, setVisitPrice] = useState(null);
+  const [priceInfo, setPriceInfo] = useState(null);
+  const [loadingPriceInfo, setLoadingPriceInfo] = useState(false);
 
   useEffect(() => {
     loadProperty();
@@ -45,6 +55,9 @@ function PropertyDetail() {
       if (foundProperty) {
         console.log('Property loaded successfully:', foundProperty);
         setProperty(foundProperty);
+        
+        // Calcular información de visitas (ahora async)
+        await calculateVisitInfo(foundProperty);
       } else {
         setError('Propiedad no encontrada');
       }
@@ -56,36 +69,129 @@ function PropertyDetail() {
     }
   };
 
+  // Calcular información de visitas disponibles y precio (10% del arriendo)
+  const calculateVisitInfo = async (property) => {
+    try {
+      setLoadingPriceInfo(true);
+      
+      // Simular visitas disponibles (esto debería venir del backend/broker)
+      const mockVisits = Math.floor(Math.random() * 10) + 1; // 1-10 visitas disponibles
+      setAvailableVisits(mockVisits);
+      
+      // Obtener información completa de precios con conversiones UF
+      const basePrice = property.price || property.price_min || 0;
+      const currency = property.currency || 'CLP';
+      
+      const fullPriceInfo = await getPriceInfo(basePrice, currency);
+      setPriceInfo(fullPriceInfo);
+      
+      // Calcular precio de visita (10% del precio de arriendo)
+      let visitCost = {
+        amount: Math.round(basePrice * 0.1),
+        currency: currency
+      };
+
+      // Si el precio original está en UF, calcular también el equivalente en CLP
+      if (currency === 'UF') {
+        try {
+          const ufConversion = await calculate10PercentInCLP(basePrice);
+          visitCost = {
+            ufAmount: ufConversion.tenPercentUF,
+            clpAmount: ufConversion.tenPercentCLP,
+            currency: 'UF',
+            clpEquivalent: true,
+            ufValue: ufConversion.ufValue,
+            ufDate: ufConversion.ufDate
+          };
+        } catch (error) {
+          console.error('Error converting UF to CLP:', error);
+          // Fallback al cálculo básico
+        }
+      }
+      
+      setVisitPrice(visitCost);
+      
+    } catch (error) {
+      console.error('Error calculating visit info:', error);
+      // Fallback básico
+      const basePrice = property.price || property.price_min || 0;
+      setVisitPrice({
+        amount: Math.round(basePrice * 0.1),
+        currency: property.currency || 'CLP'
+      });
+    } finally {
+      setLoadingPriceInfo(false);
+    }
+  };
+
   const handleRent = async () => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
 
+    // Verificar conexión al broker
+    if (!isConnected) {
+      setBrokerError('No hay conexión con el broker. Intentando reconectar...');
+      retryConnection();
+      return;
+    }
+
+    // Verificar visitas disponibles
+    if (availableVisits <= 0) {
+      setBrokerError('No hay visitas disponibles para esta propiedad');
+      return;
+    }
+
     try {
       setRenting(true);
-      // Obtener el groupId del usuario (puedes configurarlo como metadata en Auth0)
-      const groupId = user?.['custom:group_id'] || user?.groupId || 'G8';
+      setBrokerRequestInProgress(true);
+      setBrokerError('');
+      
+      // Reservar visita temporalmente (descontar del total)
+      setAvailableVisits(prev => prev - 1);
       
       // Usar ID si está disponible, sino usar URL para compatibilidad
       const propertyIdentifier = property.id || property.url;
+      
+      // Enviar solicitud de compra al broker
+      const brokerResponse = await sendPurchaseRequest(propertyIdentifier, 'VISIT');
+      console.log('Broker response:', brokerResponse);
+      
+      // También mantener compatibilidad con el backend existente
+      const groupId = user?.['custom:group_id'] || user?.groupId || 'G8';
       await propertyService.rentProperty(propertyIdentifier, groupId);
+      
       setRentSuccess(true);
       
-      // Agregar la propiedad a las solicitudes del usuario
+      // Agregar la solicitud con información del broker
       dispatch({
         type: 'ADD_USER_REQUEST',
         payload: {
           ...property,
-          rental_id: Date.now().toString(),
+          rental_id: brokerResponse.request_id || Date.now().toString(),
           rental_date: new Date().toISOString(),
-          status: 'pending'
+          status: 'pending',
+          broker_request_id: brokerResponse.request_id,
+          visit_price: visitPrice,
+          available_visits: availableVisits - 1
         }
       });
+      
     } catch (err) {
-      setError('Error al procesar la solicitud de alquiler');
+      console.error('Error in rent request:', err);
+      
+      // Restaurar visita si falló la solicitud
+      setAvailableVisits(prev => prev + 1);
+      
+      if (err.message.includes('broker') || err.message.includes('timeout')) {
+        setBrokerError(`Error del broker: ${err.message}`);
+      } else {
+        setError('Error al procesar la solicitud de alquiler');
+      }
     } finally {
       setRenting(false);
+      setBrokerRequestInProgress(false);
     }
   };
 
@@ -212,6 +318,118 @@ function PropertyDetail() {
                 {formatPrice(property)}
               </span>
               <span className="period">/mes</span>
+              
+              {/* Información de conversión UF */}
+              {priceInfo && priceInfo.conversions && (
+                <div className="price-conversions">
+                  {priceInfo.original.currency === 'UF' && priceInfo.conversions.clp && (
+                    <div className="conversion-info">
+                      <span className="conversion-label">Equivalente en CLP:</span>
+                      <span className="conversion-value">
+                        {formatUFPrice(priceInfo.conversions.clp.amount, 'CLP')}
+                      </span>
+                      <div className="uf-info">
+                        <span className="uf-value">
+                          UF: {formatUFPrice(priceInfo.conversions.clp.ufValue, 'CLP')}
+                        </span>
+                        <span className="uf-date">
+                          ({new Date(priceInfo.conversions.clp.ufDate).toLocaleDateString('es-CL')})
+                        </span>
+                        <button 
+                          className="uf-refresh"
+                          onClick={refreshUFValue}
+                          title="Actualizar valor UF"
+                        >
+                          <FaSync />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {priceInfo.original.currency === 'CLP' && priceInfo.conversions.uf && (
+                    <div className="conversion-info">
+                      <span className="conversion-label">Equivalente en UF:</span>
+                      <span className="conversion-value">
+                        {formatUFPrice(priceInfo.conversions.uf.amount, 'UF')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Información de visitas disponibles */}
+            <div className="visit-info">
+              <div className="visit-availability">
+                <h3>Visitas Disponibles</h3>
+                <div className="visit-details">
+                  <div className="visit-count">
+                    <span className="count">{availableVisits || 0}</span>
+                    <span className="label">visitas disponibles</span>
+                  </div>
+                  {visitPrice && !loadingPriceInfo && (
+                    <div className="visit-price">
+                      <span className="price-label">Costo por visita (10% del arriendo):</span>
+                      
+                      {visitPrice.clpEquivalent ? (
+                        <div className="visit-price-uf">
+                          <span className="price-value primary">
+                            {formatUFPrice(visitPrice.ufAmount, 'UF')}
+                          </span>
+                          <span className="price-value secondary">
+                            ≈ {formatUFPrice(visitPrice.clpAmount, 'CLP')}
+                          </span>
+                          <span className="price-note">
+                            UF: {formatUFPrice(visitPrice.ufValue, 'CLP')} 
+                            ({new Date(visitPrice.ufDate).toLocaleDateString('es-CL')})
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="visit-price-normal">
+                          <span className="price-value">
+                            {visitPrice.currency === 'UF' ? 
+                              formatUFPrice(visitPrice.amount, 'UF') : 
+                              formatUFPrice(visitPrice.amount, visitPrice.currency)
+                            }
+                          </span>
+                          <span className="price-note">(10% del precio de arriendo)</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {loadingPriceInfo && (
+                    <div className="visit-price">
+                      <span className="price-label">Calculando precio...</span>
+                      <div className="price-loading">
+                        <FaSpinner className="spinner" />
+                        <span>Obteniendo valor UF actualizado</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Estado de conexión del broker */}
+              <div className="broker-status">
+                <div className={`connection-indicator ${connectionStatus}`}>
+                  <FaWifi className="icon" />
+                  <span>
+                    {connectionStatus === 'connected' && 'Conectado al broker'}
+                    {connectionStatus === 'connecting' && 'Conectando...'}
+                    {connectionStatus === 'disconnected' && 'Desconectado'}
+                    {connectionStatus === 'error' && 'Error de conexión'}
+                  </span>
+                </div>
+                {connectionStatus === 'error' && (
+                  <button 
+                    className="btn btn-sm btn-outline"
+                    onClick={retryConnection}
+                  >
+                    Reintentar conexión
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="property-features">
@@ -283,9 +501,16 @@ function PropertyDetail() {
               </div>
             )}
 
+            {brokerError && (
+              <div className="alert alert-warning">
+                <FaExclamationTriangle className="alert-icon" />
+                {brokerError}
+              </div>
+            )}
+
             {rentSuccess && (
               <div className="alert alert-success">
-                ¡Solicitud de alquiler enviada exitosamente! Te contactaremos pronto.
+                ¡Solicitud de visita enviada exitosamente al broker! Te contactaremos pronto.
               </div>
             )}
 
@@ -294,17 +519,30 @@ function PropertyDetail() {
                 <button 
                   className="btn btn-success btn-lg"
                   onClick={handleRent}
-                  disabled={renting || rentSuccess}
+                  disabled={renting || rentSuccess || !isConnected || availableVisits <= 0}
                 >
-                  {renting ? (
+                  {brokerRequestInProgress ? (
+                    <>
+                      <FaSpinner className="spinner" />
+                      Enviando al broker...
+                    </>
+                  ) : renting ? (
                     <>
                       <FaSpinner className="spinner" />
                       Procesando...
                     </>
                   ) : rentSuccess ? (
                     'Solicitud Enviada'
+                  ) : !isConnected ? (
+                    'Sin conexión al broker'
+                  ) : availableVisits <= 0 ? (
+                    'Sin visitas disponibles'
                   ) : (
-                    'Solicitar Alquiler'
+                    `Solicitar Visita - ${visitPrice ? 
+                      (visitPrice.currency === 'UF' ? 
+                        `${visitPrice.amount} UF` : 
+                        `$${visitPrice.amount.toLocaleString('es-CL')} ${visitPrice.currency}`
+                      ) : 'Precio calculando...'}`
                   )}
                 </button>
               ) : (
