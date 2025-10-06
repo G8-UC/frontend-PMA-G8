@@ -13,19 +13,25 @@ class PurchaseRequestService {
     axios.interceptors.request.use(
       async (config) => {
         // Obtener token de Auth0 si está disponible
-        if (window.auth0Client) {
+        if (window.auth0Client && window.auth0Client.getAccessTokenSilently) {
           try {
             const token = await window.auth0Client.getAccessTokenSilently();
             if (token) {
               config.headers.Authorization = `Bearer ${token}`;
+              console.log('Auth token added to request:', config.url);
+            } else {
+              console.log('No auth token available for request:', config.url);
             }
           } catch (error) {
-            console.log('Could not get Auth0 token:', error);
+            console.log('Could not get Auth0 token for request:', config.url, error);
           }
+        } else {
+          console.log('Auth0 client not available for request:', config.url);
         }
         return config;
       },
       (error) => {
+        console.error('Request interceptor error:', error);
         return Promise.reject(error);
       }
     );
