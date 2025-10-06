@@ -1,17 +1,30 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
-import { propertyService } from '../services/propertyService';
-import { FaBed, FaBath, FaRuler, FaMapMarkerAlt, FaCalendarAlt, FaSpinner, FaHome } from 'react-icons/fa';
+import { usePurchaseRequests } from '../hooks/usePurchaseRequests';
+import { FaBed, FaBath, FaRuler, FaMapMarkerAlt, FaCalendarAlt, FaSpinner, FaHome, FaFilter, FaSearch, FaChevronLeft, FaChevronRight, FaCheckCircle, FaTimesCircle, FaClock, FaExclamationTriangle } from 'react-icons/fa';
 import LoadingScreen from '../components/common/LoadingScreen';
 import './MyRentals.css';
 
 function MyRentals() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth0();
   const navigate = useNavigate();
-  const [rentals, setRentals] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const { 
+    requests, 
+    loading, 
+    error, 
+    pagination, 
+    filters, 
+    changePage, 
+    applyFilters, 
+    clearFilters, 
+    refresh,
+    getStatusStats,
+    hasNextPage,
+    hasPrevPage
+  } = usePurchaseRequests();
+  
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     if (authLoading) return; // Esperar a que la autenticación termine de cargar
@@ -20,209 +33,256 @@ function MyRentals() {
       navigate('/login');
       return;
     }
-    
-    loadRentals();
   }, [isAuthenticated, authLoading, navigate]);
 
-  const loadRentals = async () => {
-    try {
-      setLoading(true);
-      const userRentals = await propertyService.getUserRentals(user?.id);
-      setRentals(userRentals);
-    } catch (err) {
-      setError('Error al cargar tus alquileres');
-    } finally {
-      setLoading(false);
+  const handleStatusFilter = (status) => {
+    applyFilters({ status: status === 'ALL' ? null : status });
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'VALIDATED':
+        return <FaCheckCircle className="status-icon validated" />;
+      case 'REJECTED':
+        return <FaTimesCircle className="status-icon rejected" />;
+      case 'EXPIRED':
+        return <FaExclamationTriangle className="status-icon expired" />;
+      case 'PENDING':
+      default:
+        return <FaClock className="status-icon pending" />;
     }
   };
 
-  const formatPrice = (price, currency) => {
-    return new Intl.NumberFormat('es-CL').format(price);
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'VALIDATED':
+        return 'Aprobada';
+      case 'REJECTED':
+        return 'Rechazada';
+      case 'EXPIRED':
+        return 'Expirada';
+      case 'PENDING':
+      default:
+        return 'Pendiente';
+    }
   };
 
-  const formatDate = (timestamp) => {
-    return new Date(timestamp).toLocaleDateString('es-CL', {
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('es-CL', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
 
-  const getStatusBadge = (status) => {
-    const statusConfig = {
-      active: { label: 'Activo', className: 'status-active' },
-      pending: { label: 'Pendiente', className: 'status-pending' },
-      cancelled: { label: 'Cancelado', className: 'status-cancelled' },
-      expired: { label: 'Expirado', className: 'status-expired' }
-    };
-    
-    const config = statusConfig[status] || statusConfig.pending;
-    return (
-      <span className={`status-badge ${config.className}`}>
-        {config.label}
-      </span>
-    );
+  const formatPrice = (price, currency) => {
+    if (currency === 'UF') {
+      return `${price} UF`;
+    } else if (currency === 'USD') {
+      return `$${price.toLocaleString()} USD`;
+    } else {
+      return `$${price.toLocaleString()} CLP`;
+    }
   };
 
-  // Mostrar pantalla de carga mientras la autenticación inicializa
+  const stats = getStatusStats();
+
   if (authLoading) {
     return <LoadingScreen />;
   }
 
-  // Si no está autenticado, no mostrar nada (ya se redirige)
-  if (!isAuthenticated) {
-    return null;
-  }
-
-  if (loading) {
-    return (
-      <div className="my-rentals-loading">
-        <FaSpinner className="spinner-icon" />
-        <p>Cargando tus alquileres...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="my-rentals-error">
-        <h2>Error</h2>
-        <p>{error}</p>
-        <button className="btn btn-primary" onClick={loadRentals}>
-          Reintentar
-        </button>
-      </div>
-    );
-  }
-
   return (
-    <div className="my-rentals">
-      <div className="container">
+    <div className="my-rentals-page">
+      <div className="my-rentals-container">
         <div className="my-rentals-header">
-          <h1>Mis Alquileres</h1>
-          <p>Gestiona tus propiedades alquiladas</p>
+          <h1>Mis Solicitudes de Arriendo</h1>
+          <p>Gestiona y revisa el estado de tus solicitudes de arriendo</p>
         </div>
 
-        <div className="user-info">
-          <div className="user-card">
-            <div className="user-details">
-              <div className="user-profile">
-                {user?.picture && (
-                  <img 
-                    src={user.picture} 
-                    alt={user.name} 
-                    className="user-profile-image"
-                  />
-                )}
-                <div>
-                  <h3>Bienvenido, {user?.name}</h3>
-                  <p>Email: {user?.email}</p>
-                  <p>ID: {user?.auth0Id?.split('|')[1] || user?.id}</p>
-                </div>
-              </div>
-            </div>
-            <div className="rental-stats">
-              <div className="stat">
-                <span className="stat-number">{rentals.length}</span>
-                <span className="stat-label">Propiedades</span>
-              </div>
-              <div className="stat">
-                <span className="stat-number">
-                  {rentals.filter(r => r.status === 'active').length}
-                </span>
-                <span className="stat-label">Activos</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {rentals.length > 0 ? (
-          <div className="rentals-grid">
-            {rentals.map((rental) => (
-              <div key={rental.rental_id} className="rental-card">
-                <div className="rental-image">
-                  <img 
-                    src={rental.img || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'} 
-                    alt={rental.name}
-                    onError={(e) => {
-                      e.target.src = 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80';
-                    }}
-                  />
-                  {getStatusBadge(rental.status)}
-                </div>
-
-                <div className="rental-content">
-                  <div className="rental-header">
-                    <h3 className="rental-name">{rental.name}</h3>
-                    <div className="rental-location">
-                      <FaMapMarkerAlt className="icon" />
-                      <span>{rental.location}</span>
-                    </div>
-                  </div>
-
-                  <div className="rental-features">
-                    <div className="feature">
-                      <FaBed className="icon" />
-                      <span>{rental.bedrooms} dorm.</span>
-                    </div>
-                    <div className="feature">
-                      <FaBath className="icon" />
-                      <span>{rental.bathrooms} baños</span>
-                    </div>
-                    <div className="feature">
-                      <FaRuler className="icon" />
-                      <span>{rental.m2} m²</span>
-                    </div>
-                  </div>
-
-                  <div className="rental-price">
-                    <span className="price">
-                      {formatPrice(rental.price, rental.currency)} {rental.currency}
-                    </span>
-                    <span className="period">/mes</span>
-                  </div>
-
-                  <div className="rental-dates">
-                    <div className="rental-date">
-                      <FaCalendarAlt className="icon" />
-                      <span>Alquilado: {formatDate(rental.rental_date)}</span>
-                    </div>
-                  </div>
-
-                  <div className="rental-actions">
-                    <Link 
-                      to={`/properties/${encodeURIComponent(rental.url)}`}
-                      className="btn btn-outline btn-sm"
+        {/* Filtros y controles */}
+        <div className="rentals-controls">
+          <div className="filters-section">
+            <button 
+              className={`filter-toggle ${showFilters ? 'active' : ''}`}
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <FaFilter />
+              Filtros
+            </button>
+            
+            {showFilters && (
+              <div className="filters-panel">
+                <div className="filter-group">
+                  <label>Estado:</label>
+                  <div className="status-filters">
+                    <button 
+                      className={`status-filter ${!filters.status ? 'active' : ''}`}
+                      onClick={() => handleStatusFilter('ALL')}
                     >
-                      Ver Detalles
-                    </Link>
-                    {rental.url && (
-                      <a 
-                        href={rental.url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="btn btn-secondary btn-sm"
-                      >
-                        Ver Original
-                      </a>
-                    )}
+                      Todos ({stats.total})
+                    </button>
+                    <button 
+                      className={`status-filter ${filters.status === 'PENDING' ? 'active' : ''}`}
+                      onClick={() => handleStatusFilter('PENDING')}
+                    >
+                      Pendientes ({stats.PENDING})
+                    </button>
+                    <button 
+                      className={`status-filter ${filters.status === 'VALIDATED' ? 'active' : ''}`}
+                      onClick={() => handleStatusFilter('VALIDATED')}
+                    >
+                      Aprobadas ({stats.VALIDATED})
+                    </button>
+                    <button 
+                      className={`status-filter ${filters.status === 'REJECTED' ? 'active' : ''}`}
+                      onClick={() => handleStatusFilter('REJECTED')}
+                    >
+                      Rechazadas ({stats.REJECTED})
+                    </button>
+                    <button 
+                      className={`status-filter ${filters.status === 'EXPIRED' ? 'active' : ''}`}
+                      onClick={() => handleStatusFilter('EXPIRED')}
+                    >
+                      Expiradas ({stats.EXPIRED})
+                    </button>
                   </div>
                 </div>
+                
+                <div className="filter-actions">
+                  <button className="clear-filters" onClick={clearFilters}>
+                    Limpiar Filtros
+                  </button>
+                  <button className="refresh-btn" onClick={refresh}>
+                    <FaSearch />
+                    Actualizar
+                  </button>
+                </div>
               </div>
-            ))}
+            )}
           </div>
-        ) : (
-          <div className="no-rentals">
-            <div className="no-rentals-content">
-              <FaHome className="no-rentals-icon" />
-              <h3>No tienes alquileres aún</h3>
-              <p>Explora nuestras propiedades y encuentra tu hogar ideal</p>
-              <Link to="/properties" className="btn btn-primary btn-lg">
-                Explorar Propiedades
+        </div>
+
+        {/* Lista de solicitudes */}
+        <div className="rentals-content">
+          {loading ? (
+            <div className="loading-state">
+              <FaSpinner className="spinner" />
+              <p>Cargando solicitudes...</p>
+            </div>
+          ) : error ? (
+            <div className="error-state">
+              <FaExclamationTriangle />
+              <p>{error}</p>
+              <button onClick={refresh} className="retry-btn">
+                Reintentar
+              </button>
+            </div>
+          ) : requests.length === 0 ? (
+            <div className="empty-state">
+              <FaHome className="empty-icon" />
+              <h3>No tienes solicitudes de arriendo</h3>
+              <p>Explora nuestras propiedades y crea tu primera solicitud</p>
+              <Link to="/properties" className="btn btn-primary">
+                Ver Propiedades
               </Link>
             </div>
-          </div>
-        )}
+          ) : (
+            <>
+              <div className="rentals-list">
+                {requests.map((request) => (
+                  <div key={request.request_id} className="rental-card">
+                    <div className="rental-header">
+                      <div className="rental-info">
+                        <h3>{request.property_name}</h3>
+                        <p className="property-location">
+                          <FaMapMarkerAlt />
+                          {request.property_location}
+                        </p>
+                      </div>
+                      <div className="rental-status">
+                        {getStatusIcon(request.status)}
+                        <span className={`status-text ${request.status.toLowerCase()}`}>
+                          {getStatusText(request.status)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="rental-details">
+                      <div className="rental-price">
+                        <span className="price-label">Precio:</span>
+                        <span className="price-value">
+                          {formatPrice(request.price, request.currency)}
+                        </span>
+                      </div>
+                      
+                      <div className="rental-dates">
+                        <div className="date-item">
+                          <FaCalendarAlt />
+                          <span>Solicitado: {formatDate(request.created_at)}</span>
+                        </div>
+                        {request.validated_at && (
+                          <div className="date-item">
+                            <FaCheckCircle />
+                            <span>Procesado: {formatDate(request.validated_at)}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {request.validation_message && (
+                        <div className="validation-message">
+                          <p>{request.validation_message}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="rental-actions">
+                      <Link 
+                        to={request.property_url} 
+                        className="btn btn-outline btn-sm"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Ver Propiedad
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Paginación */}
+              {pagination.totalPages > 1 && (
+                <div className="pagination">
+                  <button 
+                    className="pagination-btn"
+                    onClick={() => changePage(pagination.page - 1)}
+                    disabled={!hasPrevPage}
+                  >
+                    <FaChevronLeft />
+                    Anterior
+                  </button>
+                  
+                  <div className="pagination-info">
+                    Página {pagination.page} de {pagination.totalPages}
+                    <span className="total-count">
+                      ({pagination.totalCount} solicitudes)
+                    </span>
+                  </div>
+                  
+                  <button 
+                    className="pagination-btn"
+                    onClick={() => changePage(pagination.page + 1)}
+                    disabled={!hasNextPage}
+                  >
+                    Siguiente
+                    <FaChevronRight />
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

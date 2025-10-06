@@ -65,7 +65,7 @@ Para agregar el `group_id` al usuario:
 4. En "app_metadata" o "user_metadata", agrega:
 ```json
 {
-  "group_id": "G8"
+  "group_id": "8"
 }
 ```
 
@@ -77,7 +77,7 @@ Para incluir el `group_id` en el token automáticamente:
 ```javascript
 function (user, context, callback) {
   const namespace = 'custom:';
-  context.idToken[namespace + 'group_id'] = user.app_metadata && user.app_metadata.group_id || 'G8';
+  context.idToken[namespace + 'group_id'] = user.app_metadata && user.app_metadata.group_id || '8';
   callback(null, user, context);
 }
 ```

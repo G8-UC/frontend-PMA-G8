@@ -1,13 +1,15 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import PropertyCard from '../components/properties/PropertyCard';
 import PropertyFilters from '../components/properties/PropertyFilters';
 import { propertyService } from '../services/propertyService';
-import { FaSpinner } from 'react-icons/fa';
+import { FaSpinner, FaWifi, FaExclamationTriangle } from 'react-icons/fa';
 import './Properties.css';
 
 function Properties() {
   const { state, dispatch } = useAppContext();
+  const [apiStatus, setApiStatus] = useState(null);
+  const [testingApi, setTestingApi] = useState(false);
 
   useEffect(() => {
     loadProperties(1);
@@ -34,6 +36,25 @@ function Properties() {
     if (page !== state.pagination.currentPage && page > 0) {
       loadProperties(page);
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const testApiConnection = async () => {
+    setTestingApi(true);
+    setApiStatus(null);
+    
+    try {
+      const result = await propertyService.testApiConnection();
+      setApiStatus(result);
+      console.log('API test result:', result);
+    } catch (error) {
+      console.error('Error testing API:', error);
+      setApiStatus({
+        success: false,
+        error: error.message
+      });
+    } finally {
+      setTestingApi(false);
     }
   };
 
@@ -71,6 +92,43 @@ function Properties() {
         <div className="properties-header">
           <h1>Propiedades Disponibles</h1>
           <p>Encuentra tu hogar ideal entre nuestras {Array.isArray(state.properties) ? state.properties.length : 0} propiedades</p>
+          
+          {/* Botón de prueba de API */}
+          <div className="api-test-section">
+            <button 
+              className="btn btn-outline btn-sm"
+              onClick={testApiConnection}
+              disabled={testingApi}
+            >
+              {testingApi ? (
+                <>
+                  <FaSpinner className="spinner" />
+                  Probando API...
+                </>
+              ) : (
+                <>
+                  <FaWifi />
+                  Probar Conexión API
+                </>
+              )}
+            </button>
+            
+            {apiStatus && (
+              <div className={`api-status ${apiStatus.success ? 'success' : 'error'}`}>
+                {apiStatus.success ? (
+                  <>
+                    <FaWifi className="status-icon" />
+                    <span>API conectada exitosamente (Status: {apiStatus.status})</span>
+                  </>
+                ) : (
+                  <>
+                    <FaExclamationTriangle className="status-icon" />
+                    <span>Error de conexión: {apiStatus.error}</span>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         <PropertyFilters />

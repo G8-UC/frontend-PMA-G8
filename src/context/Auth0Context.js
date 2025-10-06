@@ -25,7 +25,7 @@ export function Auth0Provider({ children }) {
         name: user.name || user.nickname,
         email: user.email,
         picture: user.picture,
-        groupId: user['custom:group_id'] || 'G8', // Campo personalizado para el grupo
+        groupId: user['custom:group_id'] || '8', // Campo personalizado para el grupo
         auth0Id: user.sub
       };
       

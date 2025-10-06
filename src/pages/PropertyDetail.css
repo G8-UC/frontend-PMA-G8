@@ -454,6 +454,7 @@
   border-radius: 8px;
   border: 2px solid #007bff;
   min-width: 120px;
+  transition: all 0.3s ease;
 }
 
 .visit-count .count {
@@ -467,6 +468,21 @@
   font-size: 14px;
   color: #666;
   margin-top: 4px;
+}
+
+/* Estado sin visitas disponibles */
+.visit-count.no-visits {
+  border-color: #dc3545;
+  background: #fff5f5;
+}
+
+.visit-count.no-visits .count {
+  color: #dc3545;
+}
+
+.visit-count.no-visits .label {
+  color: #dc3545;
+  font-weight: 500;
 }
 
 .visit-price {

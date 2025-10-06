@@ -4,7 +4,6 @@ import { Auth0Provider } from '@auth0/auth0-react';
 import { AppProvider } from './context/AppContext';
 import { auth0Config } from './config/auth0';
 import Navbar from './components/layout/Navbar';
-import BrokerNotifications from './components/broker/BrokerNotifications';
 import Home from './pages/Home';
 import Properties from './pages/Properties';
 import Login from './pages/LoginNew';
@@ -31,7 +30,6 @@ function App() {
       <AppProvider>
         <div className="App">
           <Navbar />
-          <BrokerNotifications />
           <main className="main-content">
             <Routes>
               <Route path="/" element={<Home />} />

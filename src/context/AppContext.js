@@ -27,7 +27,7 @@ const initialState = {
     hasMore: false,
     itemsPerPage: 25
   },
-  notifications: [], // Para notificaciones del broker
+  notifications: [], // Para notificaciones generales
   loading: false,
   error: null
 };
@@ -133,8 +133,8 @@ function appReducer(state, action) {
         currentPage: 1
       };
 
-    // Nuevos reducers para eventos del broker
-    case 'UPDATE_PROPERTIES_FROM_BROKER':
+    // Reducers para actualización de propiedades
+    case 'UPDATE_PROPERTIES_FROM_API':
       return {
         ...state,
         properties: action.payload,
@@ -156,7 +156,7 @@ function appReducer(state, action) {
         )
       };
 
-    case 'RESERVE_VISIT_FROM_BROKER':
+    case 'RESERVE_VISIT_FROM_API':
       return {
         ...state,
         properties: state.properties.map(property => {
@@ -220,7 +220,7 @@ function appReducer(state, action) {
       return {
         ...state,
         userRequests: state.userRequests.map(request =>
-          request.rental_id === action.payload.requestId || request.broker_request_id === action.payload.requestId
+          request.rental_id === action.payload.requestId || request.request_id === action.payload.requestId
             ? { 
                 ...request, 
                 status: action.payload.status,
