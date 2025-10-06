@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { brokerService } from '../services/brokerService';
-import { useAuth } from '../context/AuthContext';
+import { useAuth0 } from '@auth0/auth0-react';
 
 export function useBroker() {
   const [isConnected, setIsConnected] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
   const [lastError, setLastError] = useState(null);
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth0();
 
   // Conectar al broker cuando el usuario esté autenticado
   useEffect(() => {

@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth0 } from '@auth0/auth0-react';
 import { propertyService } from '../services/propertyService';
 import { FaBed, FaBath, FaRuler, FaMapMarkerAlt, FaCalendarAlt, FaSpinner, FaHome } from 'react-icons/fa';
 import LoadingScreen from '../components/common/LoadingScreen';
 import './MyRentals.css';
 
 function MyRentals() {
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth0();
   const navigate = useNavigate();
   const [rentals, setRentals] = useState([]);
   const [loading, setLoading] = useState(true);

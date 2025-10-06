@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth0 } from '@auth0/auth0-react';
 import { FaHome, FaBuilding, FaUser, FaSignInAlt, FaSignOutAlt, FaBars, FaTimes } from 'react-icons/fa';
 import './Navbar.css';
 
 function Navbar() {
-  const { user, isAuthenticated, loading, logout } = useAuth();
+  const { user, isAuthenticated, isLoading, logout } = useAuth0();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -31,7 +31,7 @@ function Navbar() {
   };
 
   // Mostrar loading si la autenticación está cargando
-  if (loading) {
+  if (isLoading) {
     return (
       <nav className="navbar">
         <div className="navbar-container">

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth0 } from '@auth0/auth0-react';
 import { useAppContext } from '../context/AppContext';
 import { useBroker } from '../hooks/useBroker';
 import { useUFConverter } from '../hooks/useUFConverter';
@@ -13,7 +13,7 @@ import './PropertyDetail.css';
 function PropertyDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, getAccessTokenSilently } = useAuth0();
   const { state, dispatch } = useAppContext();
   const { isConnected, connectionStatus, sendPurchaseRequest, retryConnection, lastError } = useBroker();
   const { ufValue, getPriceInfo, calculate10PercentInCLP, formatPrice: formatUFPrice, refreshUFValue } = useUFConverter();
@@ -160,7 +160,7 @@ function PropertyDetail() {
       
       // También mantener compatibilidad con el backend existente
       const groupId = user?.['custom:group_id'] || user?.groupId || 'G8';
-      await propertyService.rentProperty(propertyIdentifier, groupId);
+      await propertyService.rentProperty(propertyIdentifier, groupId, getAccessTokenSilently);
       
       setRentSuccess(true);
       

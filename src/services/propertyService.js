@@ -339,7 +339,9 @@ class PropertyService {
       if (getAccessToken) {
         try {
           const token = await getAccessToken();
-          headers.Authorization = `Bearer ${token}`;
+          if (token) {
+            headers.Authorization = `Bearer ${token}`;
+          }
         } catch (error) {
           console.log('Could not get access token:', error);
         }
