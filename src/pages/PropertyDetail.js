@@ -4,10 +4,13 @@ import { useAuth } from '../context/AuthContext';
 import { useAppContext } from '../context/AppContext';
 import { useBroker } from '../hooks/useBroker';
 import { useUFConverter } from '../hooks/useUFConverter';
+import { useWallet } from '../hooks/useWallet';
 import { propertyService } from '../services/propertyService';
-import { FaBed, FaBath, FaRuler, FaMapMarkerAlt, FaCalendarAlt, FaArrowLeft, FaSpinner, FaExpand, FaWifi, FaExclamationTriangle, FaSync } from 'react-icons/fa';
+import { FaBed, FaBath, FaRuler, FaMapMarkerAlt, FaCalendarAlt, FaArrowLeft, FaSpinner, FaExpand, FaWifi, FaExclamationTriangle, FaSync, FaWallet } from 'react-icons/fa';
 import LoadingScreen from '../components/common/LoadingScreen';
 import ImageModal from '../components/common/ImageModal';
+import WalletBalance from '../components/WalletBalance';
+import WalletRechargeModal from '../components/WalletRechargeModal';
 import './PropertyDetail.css';
 
 function PropertyDetail() {
@@ -17,6 +20,7 @@ function PropertyDetail() {
   const { state, dispatch } = useAppContext();
   const { isConnected, connectionStatus, sendPurchaseRequest, retryConnection, lastError } = useBroker();
   const { ufValue, getPriceInfo, calculate10PercentInCLP, formatPrice: formatUFPrice, refreshUFValue } = useUFConverter();
+  const { wallet, payVisitFromWallet, hasSufficientBalance, formatBalance, refreshWallet } = useWallet();
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -29,6 +33,8 @@ function PropertyDetail() {
   const [visitPrice, setVisitPrice] = useState(null);
   const [priceInfo, setPriceInfo] = useState(null);
   const [loadingPriceInfo, setLoadingPriceInfo] = useState(false);
+  const [showWalletRecharge, setShowWalletRecharge] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('wallet'); // 'wallet' o 'traditional'
 
   useEffect(() => {
     loadProperty();
@@ -143,6 +149,18 @@ function PropertyDetail() {
       return;
     }
 
+    // Si es pago con wallet, verificar saldo suficiente
+    if (paymentMethod === 'wallet' && visitPrice) {
+      const currency = visitPrice.currency || 'CLP';
+      const amount = visitPrice.clpAmount || visitPrice.amount || 0;
+      
+      const hasBalance = await hasSufficientBalance(amount, 'CLP');
+      if (!hasBalance) {
+        setBrokerError(`Saldo insuficiente en wallet. Necesitas $${Math.round(amount).toLocaleString('es-CL')} CLP`);
+        return;
+      }
+    }
+
     try {
       setRenting(true);
       setBrokerRequestInProgress(true);
@@ -154,6 +172,22 @@ function PropertyDetail() {
       // Usar ID si está disponible, sino usar URL para compatibilidad
       const propertyIdentifier = property.id || property.url;
       
+      // Si es pago con wallet, procesar el pago primero
+      let walletPaymentResult = null;
+      if (paymentMethod === 'wallet' && visitPrice) {
+        const currency = visitPrice.currency || 'CLP';
+        const amount = visitPrice.clpAmount || visitPrice.amount || 0;
+        
+        walletPaymentResult = await payVisitFromWallet(
+          propertyIdentifier,
+          amount,
+          'CLP',
+          property.title || 'Visita a propiedad'
+        );
+        
+        console.log('Wallet payment processed:', walletPaymentResult);
+      }
+      
       // Enviar solicitud de compra al broker
       const brokerResponse = await sendPurchaseRequest(propertyIdentifier, 'VISIT');
       console.log('Broker response:', brokerResponse);
@@ -164,7 +198,7 @@ function PropertyDetail() {
       
       setRentSuccess(true);
       
-      // Agregar la solicitud con información del broker
+      // Agregar la solicitud con información del broker y pago
       dispatch({
         type: 'ADD_USER_REQUEST',
         payload: {
@@ -174,7 +208,9 @@ function PropertyDetail() {
           status: 'pending',
           broker_request_id: brokerResponse.request_id,
           visit_price: visitPrice,
-          available_visits: availableVisits - 1
+          available_visits: availableVisits - 1,
+          payment_method: paymentMethod,
+          wallet_payment: walletPaymentResult
         }
       });
       
@@ -184,7 +220,9 @@ function PropertyDetail() {
       // Restaurar visita si falló la solicitud
       setAvailableVisits(prev => prev + 1);
       
-      if (err.message.includes('broker') || err.message.includes('timeout')) {
+      if (err.message.includes('saldo insuficiente') || err.message.includes('wallet')) {
+        setBrokerError(`Error de pago: ${err.message}`);
+      } else if (err.message.includes('broker') || err.message.includes('timeout')) {
         setBrokerError(`Error del broker: ${err.message}`);
       } else {
         setError('Error al procesar la solicitud de alquiler');
@@ -514,12 +552,106 @@ function PropertyDetail() {
               </div>
             )}
 
+            {/* Sistema de Wallet */}
+            {isAuthenticated && (
+              <div className="wallet-section">
+                <h3>Sistema de Pagos</h3>
+                
+                {/* Selector de método de pago */}
+                <div className="payment-method-selector">
+                  <div className="payment-option">
+                    <input
+                      type="radio"
+                      id="wallet-payment"
+                      name="paymentMethod"
+                      value="wallet"
+                      checked={paymentMethod === 'wallet'}
+                      onChange={() => setPaymentMethod('wallet')}
+                    />
+                    <label htmlFor="wallet-payment">
+                      <FaWallet className="payment-icon" />
+                      <span>Pagar con Wallet</span>
+                    </label>
+                  </div>
+                  <div className="payment-option">
+                    <input
+                      type="radio"
+                      id="traditional-payment"
+                      name="paymentMethod"
+                      value="traditional"
+                      checked={paymentMethod === 'traditional'}
+                      onChange={() => setPaymentMethod('traditional')}
+                    />
+                    <label htmlFor="traditional-payment">
+                      <span>Método tradicional</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Información del Wallet */}
+                {paymentMethod === 'wallet' && (
+                  <div className="wallet-info">
+                    <WalletBalance 
+                      showRechargeButton={true}
+                      onRecharge={() => setShowWalletRecharge(true)}
+                    />
+                    
+                    {/* Verificación de saldo para la visita */}
+                    {visitPrice && wallet && (
+                      <div className="wallet-payment-info">
+                        <div className="payment-breakdown">
+                          <span className="breakdown-label">Costo de la visita:</span>
+                          <span className="breakdown-value">
+                            {visitPrice.clpEquivalent ? 
+                              `$${Math.round(visitPrice.clpAmount).toLocaleString('es-CL')} CLP` :
+                              `$${Math.round(visitPrice.amount).toLocaleString('es-CL')} ${visitPrice.currency}`
+                            }
+                          </span>
+                        </div>
+                        
+                        {(() => {
+                          const requiredAmount = visitPrice.clpAmount || visitPrice.amount || 0;
+                          const currentBalance = wallet.balance_clp || 0;
+                          const hasSufficient = currentBalance >= requiredAmount;
+                          
+                          return (
+                            <div className={`balance-check ${hasSufficient ? 'sufficient' : 'insufficient'}`}>
+                              {hasSufficient ? (
+                                <span className="balance-status success">
+                                  ✓ Saldo suficiente para realizar el pago
+                                </span>
+                              ) : (
+                                <div className="balance-status insufficient">
+                                  <span>
+                                    ⚠️ Saldo insuficiente. Necesitas $
+                                    {Math.round(requiredAmount - currentBalance).toLocaleString('es-CL')} CLP adicionales
+                                  </span>
+                                  <button 
+                                    className="btn btn-sm btn-primary"
+                                    onClick={() => setShowWalletRecharge(true)}
+                                  >
+                                    Recargar Wallet
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="property-actions">
               {isAuthenticated ? (
                 <button 
                   className="btn btn-success btn-lg"
                   onClick={handleRent}
-                  disabled={renting || rentSuccess || !isConnected || availableVisits <= 0}
+                  disabled={renting || rentSuccess || !isConnected || availableVisits <= 0 || 
+                           (paymentMethod === 'wallet' && visitPrice && wallet && 
+                            wallet.balance_clp < (visitPrice.clpAmount || visitPrice.amount || 0))}
                 >
                   {brokerRequestInProgress ? (
                     <>
@@ -529,7 +661,7 @@ function PropertyDetail() {
                   ) : renting ? (
                     <>
                       <FaSpinner className="spinner" />
-                      Procesando...
+                      {paymentMethod === 'wallet' ? 'Procesando pago...' : 'Procesando...'}
                     </>
                   ) : rentSuccess ? (
                     'Solicitud Enviada'
@@ -537,12 +669,22 @@ function PropertyDetail() {
                     'Sin conexión al broker'
                   ) : availableVisits <= 0 ? (
                     'Sin visitas disponibles'
+                  ) : paymentMethod === 'wallet' && visitPrice && wallet && 
+                       wallet.balance_clp < (visitPrice.clpAmount || visitPrice.amount || 0) ? (
+                    'Saldo insuficiente'
                   ) : (
-                    `Solicitar Visita - ${visitPrice ? 
-                      (visitPrice.currency === 'UF' ? 
-                        `${visitPrice.amount} UF` : 
-                        `$${visitPrice.amount.toLocaleString('es-CL')} ${visitPrice.currency}`
-                      ) : 'Precio calculando...'}`
+                    <>
+                      {paymentMethod === 'wallet' ? (
+                        <FaWallet className="btn-icon" />
+                      ) : null}
+                      {`Solicitar Visita${paymentMethod === 'wallet' ? ' (Wallet)' : ''} - ${visitPrice ? 
+                        (visitPrice.clpEquivalent ? 
+                          `$${Math.round(visitPrice.clpAmount).toLocaleString('es-CL')} CLP` :
+                          visitPrice.currency === 'UF' ? 
+                            `${visitPrice.amount} UF` : 
+                            `$${visitPrice.amount.toLocaleString('es-CL')} ${visitPrice.currency}`
+                        ) : 'Precio calculando...'}`}
+                    </>
                   )}
                 </button>
               ) : (
@@ -565,6 +707,12 @@ function PropertyDetail() {
         src={property?.img || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80'}
         alt={property?.name}
         title={property?.name}
+      />
+
+      {/* Modal de recarga de wallet */}
+      <WalletRechargeModal
+        isOpen={showWalletRecharge}
+        onClose={() => setShowWalletRecharge(false)}
       />
     </div>
   );

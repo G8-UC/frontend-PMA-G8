@@ -1,0 +1,408 @@
+.wallet-history {
+  min-height: 100vh;
+  padding: 100px 0 40px;
+  background-color: #f8f9fa;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.wallet-header {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.wallet-header h1 {
+  margin: 0 0 24px 0;
+  color: #343a40;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.wallet-summary {
+  display: flex;
+  justify-content: center;
+}
+
+.transactions-section {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.section-header h2 {
+  margin: 0;
+  color: #343a40;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.section-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.refresh-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  color: #495057;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.transaction-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  padding: 4px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  width: fit-content;
+}
+
+.filter-btn {
+  background: transparent;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  color: #6c757d;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.filter-btn:hover {
+  background: #e9ecef;
+  color: #495057;
+}
+
+.filter-btn.active {
+  background: #007bff;
+  color: white;
+}
+
+/* Loading and Error States */
+.loading-state,
+.error-state,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.loading-state .spinner {
+  font-size: 32px;
+  color: #007bff;
+  margin-bottom: 16px;
+  animation: spin 1s linear infinite;
+}
+
+.error-state p {
+  color: #dc3545;
+  margin-bottom: 16px;
+  font-size: 16px;
+}
+
+.empty-state .empty-icon {
+  font-size: 64px;
+  color: #dee2e6;
+  margin-bottom: 24px;
+}
+
+.empty-state h3 {
+  color: #6c757d;
+  margin-bottom: 8px;
+}
+
+.empty-state p {
+  color: #adb5bd;
+  margin-bottom: 24px;
+}
+
+/* Transactions List */
+.transactions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.transaction-item {
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  background: #fafafa;
+  transition: all 0.3s ease;
+}
+
+.transaction-item:hover {
+  border-color: #007bff;
+  background: #f8f9ff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.1);
+}
+
+.transaction-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  margin-right: 16px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+}
+
+.transaction-icon {
+  font-size: 20px;
+}
+
+.transaction-icon.recharge {
+  color: #198754;
+}
+
+.transaction-icon.payment {
+  color: #dc3545;
+}
+
+.transaction-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.transaction-main {
+  margin-bottom: 4px;
+}
+
+.transaction-title {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #343a40;
+}
+
+.transaction-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #6c757d;
+}
+
+.meta-icon {
+  font-size: 12px;
+}
+
+.payment-method {
+  text-transform: capitalize;
+}
+
+.transaction-property {
+  font-size: 14px;
+  color: #495057;
+  margin-top: 4px;
+}
+
+.transaction-amount {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  min-width: 140px;
+}
+
+.amount {
+  font-size: 18px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.amount.positive {
+  color: #198754;
+}
+
+.amount.negative {
+  color: #dc3545;
+}
+
+.status-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.status-badge.success {
+  background: #d1edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.status-badge.warning {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+.status-badge.danger {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.status-badge.secondary {
+  background: #e2e3e5;
+  color: #383d41;
+  border: 1px solid #d6d8db;
+}
+
+.load-more {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0;
+}
+
+.auth-required {
+  text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.auth-required h2 {
+  color: #343a40;
+  margin-bottom: 16px;
+}
+
+.auth-required p {
+  color: #6c757d;
+  font-size: 16px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .wallet-history {
+    padding: 80px 0 20px;
+  }
+  
+  .container {
+    padding: 0 16px;
+  }
+  
+  .wallet-header,
+  .transactions-section {
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .wallet-header h1 {
+    font-size: 24px;
+    margin-bottom: 16px;
+  }
+  
+  .section-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  
+  .section-header h2 {
+    font-size: 20px;
+  }
+  
+  .transaction-filters {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .filter-btn {
+    flex: 1;
+    text-align: center;
+  }
+  
+  .transaction-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px;
+  }
+  
+  .transaction-icon-wrapper {
+    margin-right: 0;
+    align-self: flex-start;
+  }
+  
+  .transaction-details {
+    width: 100%;
+  }
+  
+  .transaction-amount {
+    align-items: flex-start;
+    width: 100%;
+  }
+  
+  .amount {
+    font-size: 16px;
+  }
+  
+  .loading-state,
+  .error-state,
+  .empty-state {
+    padding: 40px 16px;
+  }
+  
+  .empty-state .empty-icon {
+    font-size: 48px;
+  }
+}

@@ -1,0 +1,96 @@
+.wallet-balance {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 1px solid #dee2e6;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.wallet-balance:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.wallet-balance.loading {
+  justify-content: center;
+  color: #6c757d;
+}
+
+.wallet-balance.error {
+  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+.balance-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-grow: 1;
+}
+
+.balance-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.balance-amount {
+  font-size: 18px;
+  font-weight: 700;
+  color: #198754;
+  line-height: 1;
+}
+
+.balance-uf {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fd7e14;
+  line-height: 1;
+}
+
+.recharge-button {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.recharge-button:hover {
+  background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.recharge-button:active {
+  transform: translateY(0);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .wallet-balance {
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+  }
+  
+  .balance-info {
+    text-align: center;
+  }
+  
+  .recharge-button {
+    width: 100%;
+    padding: 12px;
+  }
+}

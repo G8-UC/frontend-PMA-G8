@@ -241,3 +241,53 @@
     transform: rotate(-45deg) translate(6px, -6px);
   }
 }
+
+/* Wallet Styles in Navbar */
+.navbar-wallet {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 16px;
+}
+
+.wallet-recharge-btn {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: white;
+  border: none;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+}
+
+.wallet-recharge-btn:hover {
+  background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+/* Mobile wallet styles */
+@media (max-width: 768px) {
+  .navbar-wallet {
+    order: -1;
+    margin-right: 0;
+    margin-bottom: 12px;
+    justify-content: center;
+    width: 100%;
+  }
+  
+  .user-menu {
+    align-items: center;
+  }
+  
+  .wallet-recharge-btn {
+    min-width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
+}

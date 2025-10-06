@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { FaHome, FaBuilding, FaUser, FaSignInAlt, FaSignOutAlt, FaBars, FaTimes } from 'react-icons/fa';
+import { FaHome, FaBuilding, FaUser, FaSignInAlt, FaSignOutAlt, FaBars, FaTimes, FaWallet } from 'react-icons/fa';
+import WalletBalance from '../WalletBalance';
+import WalletRechargeModal from '../WalletRechargeModal';
 import './Navbar.css';
 
 function Navbar() {
   const { user, isAuthenticated, loading, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showWalletRecharge, setShowWalletRecharge] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -89,11 +92,37 @@ function Navbar() {
                 </Link>
               </li>
             )}
+            {isAuthenticated && (
+              <li className="nav-item">
+                <Link 
+                  to="/wallet" 
+                  className={`nav-link ${isActive('/wallet') ? 'active' : ''}`}
+                  onClick={closeMobileMenu}
+                >
+                  <FaWallet className="nav-icon" />
+                  <span>Mi Wallet</span>
+                </Link>
+              </li>
+            )}
           </ul>
 
           <div className="navbar-auth">
             {isAuthenticated ? (
               <div className="user-menu">
+                {/* Wallet Balance */}
+                <div className="navbar-wallet">
+                  <WalletBalance 
+                    showRechargeButton={false}
+                  />
+                  <button 
+                    className="wallet-recharge-btn"
+                    onClick={() => setShowWalletRecharge(true)}
+                    title="Recargar Wallet"
+                  >
+                    <FaWallet />
+                  </button>
+                </div>
+                
                 <div className="user-info">
                   {user?.picture && (
                     <img 
@@ -128,6 +157,12 @@ function Navbar() {
           {mobileMenuOpen ? <FaTimes /> : <FaBars />}
         </button>
       </div>
+
+      {/* Wallet Recharge Modal */}
+      <WalletRechargeModal
+        isOpen={showWalletRecharge}
+        onClose={() => setShowWalletRecharge(false)}
+      />
     </nav>
   );
 }

@@ -686,3 +686,166 @@
     font-size: 1rem;
   }
 }
+
+/* Wallet System Styles */
+.wallet-section {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 1px solid #dee2e6;
+  border-radius: 16px;
+  padding: 24px;
+  margin: 24px 0;
+}
+
+.wallet-section h3 {
+  margin: 0 0 20px 0;
+  color: #343a40;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.payment-method-selector {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.payment-option {
+  flex: 1;
+}
+
+.payment-option input[type="radio"] {
+  display: none;
+}
+
+.payment-option label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.payment-option input[type="radio"]:checked + label {
+  border-color: #007bff;
+  background: #f8f9ff;
+  color: #007bff;
+}
+
+.payment-option label:hover {
+  border-color: #007bff;
+  background: #f8f9ff;
+}
+
+.payment-icon {
+  font-size: 18px;
+}
+
+.wallet-info {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e9ecef;
+}
+
+.wallet-payment-info {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e9ecef;
+}
+
+.payment-breakdown {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.breakdown-label {
+  font-weight: 600;
+  color: #495057;
+}
+
+.breakdown-value {
+  font-weight: 700;
+  color: #198754;
+  font-size: 16px;
+}
+
+.balance-check {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+.balance-check.sufficient {
+  background: #d1edda;
+  border: 1px solid #c3e6cb;
+}
+
+.balance-check.insufficient {
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+}
+
+.balance-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 500;
+}
+
+.balance-status.success {
+  color: #155724;
+}
+
+.balance-status.insufficient {
+  color: #721c24;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.balance-status.insufficient button {
+  align-self: flex-end;
+}
+
+.btn-icon {
+  margin-right: 8px;
+}
+
+/* Mobile responsiveness for wallet */
+@media (max-width: 768px) {
+  .wallet-section {
+    padding: 16px;
+    margin: 16px 0;
+  }
+  
+  .payment-method-selector {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .payment-breakdown {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+  
+  .balance-status.insufficient {
+    text-align: center;
+    align-items: center;
+  }
+  
+  .balance-status.insufficient button {
+    align-self: center;
+    width: 100%;
+  }
+}

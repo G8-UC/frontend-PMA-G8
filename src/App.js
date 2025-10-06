@@ -9,6 +9,7 @@ import Properties from './pages/Properties';
 import Login from './pages/LoginNew';
 import MyRentals from './pages/MyRentals';
 import PropertyDetail from './pages/PropertyDetail';
+import WalletHistory from './pages/WalletHistory';
 import LoadingScreen from './components/common/LoadingScreen';
 import './App.css';
 
@@ -26,6 +27,7 @@ function App() {
               <Route path="/properties/:id" element={<PropertyDetail />} />
               <Route path="/login" element={<Login />} />
               <Route path="/my-rentals" element={<MyRentals />} />
+              <Route path="/wallet" element={<WalletHistory />} />
               <Route path="/loading" element={<LoadingScreen />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

@@ -1,0 +1,311 @@
+.wallet-recharge-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.wallet-recharge-modal {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #343a40;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 32px;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.close-button:hover {
+  background: #f8f9fa;
+  color: #495057;
+}
+
+.close-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.success-message {
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.success-icon {
+  font-size: 64px;
+  color: #198754;
+  margin-bottom: 16px;
+}
+
+.success-message h3 {
+  color: #198754;
+  margin: 0 0 8px 0;
+  font-size: 20px;
+}
+
+.success-message p {
+  color: #6c757d;
+  margin: 0;
+  font-size: 16px;
+}
+
+form {
+  padding: 24px;
+}
+
+.predefined-amounts {
+  margin-bottom: 24px;
+}
+
+.predefined-amounts p {
+  margin: 0 0 12px 0;
+  font-weight: 600;
+  color: #495057;
+}
+
+.amount-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.amount-button {
+  padding: 12px 8px;
+  border: 2px solid #dee2e6;
+  background: white;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #495057;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.amount-button:hover {
+  border-color: #007bff;
+  background: #f8f9fa;
+}
+
+.amount-button.selected {
+  border-color: #007bff;
+  background: #007bff;
+  color: white;
+}
+
+.custom-amount {
+  margin-bottom: 24px;
+}
+
+.custom-amount label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.amount-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  background: white;
+  transition: border-color 0.2s ease;
+}
+
+.amount-input-wrapper:focus-within {
+  border-color: #007bff;
+}
+
+.currency-symbol {
+  padding: 12px 0 12px 16px;
+  color: #6c757d;
+  font-weight: 600;
+}
+
+.amount-input {
+  flex: 1;
+  border: none;
+  padding: 12px 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #495057;
+  outline: none;
+  background: transparent;
+}
+
+.currency-code {
+  padding: 12px 16px 12px 0;
+  color: #6c757d;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.payment-method {
+  margin-bottom: 24px;
+}
+
+.payment-method label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.payment-select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  font-size: 16px;
+  color: #495057;
+  background: white;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.payment-select:focus {
+  border-color: #007bff;
+}
+
+.error-message {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.cancel-button {
+  padding: 12px 24px;
+  border: 2px solid #6c757d;
+  background: white;
+  color: #6c757d;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancel-button:hover:not(:disabled) {
+  background: #6c757d;
+  color: white;
+}
+
+.cancel-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.submit-button {
+  padding: 12px 24px;
+  border: none;
+  background: linear-gradient(135deg, #198754 0%, #157347 100%);
+  color: white;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.submit-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #157347 0%, #146c43 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3);
+}
+
+.submit-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .wallet-recharge-modal {
+    width: 95%;
+    margin: 20px;
+  }
+  
+  .modal-header {
+    padding: 20px;
+  }
+  
+  form {
+    padding: 20px;
+  }
+  
+  .amount-buttons {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+  }
+  
+  .cancel-button,
+  .submit-button {
+    width: 100%;
+  }
+}
