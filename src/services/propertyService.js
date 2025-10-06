@@ -129,17 +129,40 @@ class PropertyService {
     // No necesitamos duplicar la lógica aquí
   }
 
-  async getProperties(page = 1) {
+  async getProperties(page = 1, filters = {}) {
     try {
-      // Llamada real al backend con paginación
-      const response = await axios.get(`${API_BASE_URL}/properties?page=${page}`);
-      console.log('Backend response:', response);
-      console.log('Response data:', response.data);
-      console.log('Response data type:', typeof response.data);
-      console.log('Is response.data array?', Array.isArray(response.data));
+      // Construir parámetros de query según OpenAPI
+      const queryParams = new URLSearchParams();
+      queryParams.append('page', page);
+      queryParams.append('limit', 25); // Default limit según OpenAPI
+      
+      // Aplicar filtros según la especificación OpenAPI
+      if (filters.price) {
+        queryParams.append('price', filters.price);
+      }
+      if (filters.location) {
+        queryParams.append('location', filters.location);
+      }
+      if (filters.date) {
+        queryParams.append('date', filters.date);
+      }
+      
+      const url = `${API_BASE_URL}/properties?${queryParams}`;
+      
+      // Llamada real al backend con filtros
+      const response = await axios.get(url, {
+        timeout: 10000, // 10 segundos de timeout
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+      
       
       // Verificar la estructura de la respuesta
       let properties = response.data;
+      let totalPages = 1;
+      let hasMore = false;
       
       // Si la respuesta tiene una estructura anidada, extraer el array de propiedades
       if (properties && typeof properties === 'object' && !Array.isArray(properties)) {
@@ -150,20 +173,31 @@ class PropertyService {
         } else if (Array.isArray(properties.results)) {
           properties = properties.results;
         }
+        
+        // Extraer metadatos de paginación si están disponibles
+        if (properties.total_pages !== undefined) {
+          totalPages = properties.total_pages;
+        }
+        if (properties.has_more !== undefined) {
+          hasMore = properties.has_more;
+        }
       }
       
       // Asegurar que tenemos un array
       if (!Array.isArray(properties)) {
-        console.warn('Backend response is not an array, converting to array:', properties);
         properties = [];
       }
       
-      console.log('Properties loaded from backend (page', page, '):', properties);
+      // Calcular metadatos de paginación si no están disponibles
+      if (totalPages === 1 && properties.length > 0) {
+        hasMore = properties.length === 25; // Asumir que hay más si devuelve exactamente 25
+      }
+      
       return {
         properties: properties,
         page: page,
-        totalPages: Math.max(page, properties.length === 25 ? page + 1 : page), // Si devuelve 25, asumimos que hay al menos una página más
-        hasMore: properties.length === 25 // Si devuelve exactamente 25, probablemente hay más
+        totalPages: totalPages,
+        hasMore: hasMore
       };
     } catch (error) {
       console.error('Error fetching properties from backend:', error);
@@ -323,15 +357,11 @@ class PropertyService {
     }
   }
 
-  async rentProperty(propertyId, groupId = 'G8', getAccessToken = null) {
+  async rentProperty(propertyId, groupId = '8', getAccessToken = null) {
     try {
       const requestData = {
-        request_id: uuidv4(),
         group_id: groupId,
-        timestamp: new Date().toISOString(),
-        property_id: propertyId, // Usar property_id en lugar de url
-        origin: 0,
-        operation: "BUY"
+        property_id: propertyId
       };
 
       // Llamada real al backend
@@ -339,13 +369,15 @@ class PropertyService {
       if (getAccessToken) {
         try {
           const token = await getAccessToken();
-          headers.Authorization = `Bearer ${token}`;
+          if (token) {
+            headers.Authorization = `Bearer ${token}`;
+          }
         } catch (error) {
           console.log('Could not get access token:', error);
         }
       }
       
-      const response = await axios.post(`${API_BASE_URL}/rent`, requestData, { headers });
+      const response = await axios.post(`${API_BASE_URL}/purchase-requests`, requestData, { headers });
       return response.data;
       
       // Para testing con datos mock, comenta las líneas de arriba y descomenta estas:
@@ -418,6 +450,7 @@ class PropertyService {
       });
     }
   }
+
 
   // Método para actualizar el cliente de Auth0 (llamar desde el contexto)
   setAuth0Client(auth0Client) {

@@ -2,7 +2,7 @@
 export const auth0Config = {
   domain: process.env.REACT_APP_AUTH0_DOMAIN || 'your-domain.auth0.com',
   clientId: process.env.REACT_APP_AUTH0_CLIENT_ID || 'your-client-id',
-  redirectUri: process.env.REACT_APP_AUTH0_REDIRECT_URI || window.location.origin,
+  redirectUri: process.env.REACT_APP_AUTH0_REDIRECT_URI || `${window.location.origin}/callback`,
   audience: process.env.REACT_APP_AUTH0_AUDIENCE || 'https://nicoriquelmecti.space/api/v1', // Optional: para APIs
   scope: 'openid profile email'
 };

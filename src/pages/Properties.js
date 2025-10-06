@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import PropertyCard from '../components/properties/PropertyCard';
 import PropertyFilters from '../components/properties/PropertyFilters';
@@ -13,13 +13,17 @@ function Properties() {
     loadProperties(1);
   }, []);
 
-  const loadProperties = async (page = 1) => {
-    console.log(`Loading properties for page: ${page}`);
+  // Recargar propiedades cuando cambien los filtros
+  useEffect(() => {
+    if (state.filters && Object.keys(state.filters).length > 0) {
+      loadProperties(1, state.filters);
+    }
+  }, [state.filters]);
+
+  const loadProperties = async (page = 1, filters = {}) => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
-      const result = await propertyService.getProperties(page);
-      console.log('Properties received:', result);
-      console.log(`Page ${page}: ${result.properties.length} properties, hasMore: ${result.hasMore}`);
+      const result = await propertyService.getProperties(page, filters);
       
       dispatch({ type: 'SET_PROPERTIES', payload: result });
       dispatch({ type: 'SET_PAGE', payload: page });
@@ -30,12 +34,12 @@ function Properties() {
   };
 
   const handlePageChange = (page) => {
-    console.log(`Changing from page ${state.pagination.currentPage} to page ${page}`);
     if (page !== state.pagination.currentPage && page > 0) {
-      loadProperties(page);
+      loadProperties(page, state.filters);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
+
 
   // Para la paginación del servidor, mostramos todas las propiedades cargadas
   const filteredProperties = Array.isArray(state.filteredProperties) ? state.filteredProperties : [];

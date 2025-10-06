@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth0 } from '@auth0/auth0-react';
 import { useAppContext } from '../context/AppContext';
-import { useBroker } from '../hooks/useBroker';
+import { usePurchaseRequests } from '../hooks/usePurchaseRequests';
 import { useUFConverter } from '../hooks/useUFConverter';
 import { propertyService } from '../services/propertyService';
 import { FaBed, FaBath, FaRuler, FaMapMarkerAlt, FaCalendarAlt, FaArrowLeft, FaSpinner, FaExpand, FaWifi, FaExclamationTriangle, FaSync } from 'react-icons/fa';
@@ -13,9 +13,9 @@ import './PropertyDetail.css';
 function PropertyDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, getAccessTokenSilently } = useAuth0();
   const { state, dispatch } = useAppContext();
-  const { isConnected, connectionStatus, sendPurchaseRequest, retryConnection, lastError } = useBroker();
+  const { createRequest, loading: requestLoading, error: purchaseError } = usePurchaseRequests();
   const { ufValue, getPriceInfo, calculate10PercentInCLP, formatPrice: formatUFPrice, refreshUFValue } = useUFConverter();
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -23,8 +23,8 @@ function PropertyDetail() {
   const [renting, setRenting] = useState(false);
   const [rentSuccess, setRentSuccess] = useState(false);
   const [imageModalOpen, setImageModalOpen] = useState(false);
-  const [brokerRequestInProgress, setBrokerRequestInProgress] = useState(false);
-  const [brokerError, setBrokerError] = useState('');
+  const [requestInProgress, setRequestInProgress] = useState(false);
+  const [localRequestError, setLocalRequestError] = useState('');
   const [availableVisits, setAvailableVisits] = useState(null);
   const [visitPrice, setVisitPrice] = useState(null);
   const [priceInfo, setPriceInfo] = useState(null);
@@ -54,6 +54,7 @@ function PropertyDetail() {
       
       if (foundProperty) {
         console.log('Property loaded successfully:', foundProperty);
+        console.log('Available visits from backend:', foundProperty.available_visits);
         setProperty(foundProperty);
         
         // Calcular información de visitas (ahora async)
@@ -74,9 +75,19 @@ function PropertyDetail() {
     try {
       setLoadingPriceInfo(true);
       
-      // Simular visitas disponibles (esto debería venir del backend/broker)
-      const mockVisits = Math.floor(Math.random() * 10) + 1; // 1-10 visitas disponibles
-      setAvailableVisits(mockVisits);
+      // Usar available_visits del backend, con fallback a simulación si no está disponible
+      const visitsFromBackend = property.available_visits;
+      if (visitsFromBackend !== undefined && visitsFromBackend !== null) {
+        // Asegurar que el valor sea un número válido
+        const validVisits = Math.max(0, parseInt(visitsFromBackend) || 0);
+        setAvailableVisits(validVisits);
+        console.log(`Visitas disponibles desde backend: ${validVisits}`);
+      } else {
+        // Fallback: simular visitas disponibles si no viene del backend
+        const mockVisits = Math.floor(Math.random() * 10) + 1; // 1-10 visitas disponibles
+        setAvailableVisits(mockVisits);
+        console.log(`Visitas simuladas (fallback): ${mockVisits}`);
+      }
       
       // Obtener información completa de precios con conversiones UF
       const basePrice = property.price || property.price_min || 0;
@@ -130,68 +141,37 @@ function PropertyDetail() {
       return;
     }
 
-    // Verificar conexión al broker
-    if (!isConnected) {
-      setBrokerError('No hay conexión con el broker. Intentando reconectar...');
-      retryConnection();
-      return;
-    }
-
     // Verificar visitas disponibles
     if (availableVisits <= 0) {
-      setBrokerError('No hay visitas disponibles para esta propiedad');
+      setLocalRequestError('No hay visitas disponibles para esta propiedad');
       return;
     }
 
     try {
       setRenting(true);
-      setBrokerRequestInProgress(true);
-      setBrokerError('');
-      
-      // Reservar visita temporalmente (descontar del total)
-      setAvailableVisits(prev => prev - 1);
+      setRequestInProgress(true);
+      setLocalRequestError('');
       
       // Usar ID si está disponible, sino usar URL para compatibilidad
       const propertyIdentifier = property.id || property.url;
       
-      // Enviar solicitud de compra al broker
-      const brokerResponse = await sendPurchaseRequest(propertyIdentifier, 'VISIT');
-      console.log('Broker response:', brokerResponse);
-      
-      // También mantener compatibilidad con el backend existente
-      const groupId = user?.['custom:group_id'] || user?.groupId || 'G8';
-      await propertyService.rentProperty(propertyIdentifier, groupId);
+      // Crear solicitud de compra usando el nuevo servicio
+      const response = await createRequest(propertyIdentifier);
+      console.log('Purchase request created:', response);
       
       setRentSuccess(true);
       
-      // Agregar la solicitud con información del broker
-      dispatch({
-        type: 'ADD_USER_REQUEST',
-        payload: {
-          ...property,
-          rental_id: brokerResponse.request_id || Date.now().toString(),
-          rental_date: new Date().toISOString(),
-          status: 'pending',
-          broker_request_id: brokerResponse.request_id,
-          visit_price: visitPrice,
-          available_visits: availableVisits - 1
-        }
-      });
+      // Redirigir a la lista de solicitudes después de un breve delay
+      setTimeout(() => {
+        navigate('/my-rentals');
+      }, 2000);
       
     } catch (err) {
-      console.error('Error in rent request:', err);
-      
-      // Restaurar visita si falló la solicitud
-      setAvailableVisits(prev => prev + 1);
-      
-      if (err.message.includes('broker') || err.message.includes('timeout')) {
-        setBrokerError(`Error del broker: ${err.message}`);
-      } else {
-        setError('Error al procesar la solicitud de alquiler');
-      }
+      console.error('Error creating purchase request:', err);
+      setLocalRequestError(`Error al crear la solicitud: ${err.message}`);
     } finally {
       setRenting(false);
-      setBrokerRequestInProgress(false);
+      setRequestInProgress(false);
     }
   };
 
@@ -363,9 +343,11 @@ function PropertyDetail() {
               <div className="visit-availability">
                 <h3>Visitas Disponibles</h3>
                 <div className="visit-details">
-                  <div className="visit-count">
+                  <div className={`visit-count ${availableVisits === 0 ? 'no-visits' : ''}`}>
                     <span className="count">{availableVisits || 0}</span>
-                    <span className="label">visitas disponibles</span>
+                    <span className="label">
+                      {availableVisits === 0 ? 'sin visitas disponibles' : 'visitas disponibles'}
+                    </span>
                   </div>
                   {visitPrice && !loadingPriceInfo && (
                     <div className="visit-price">
@@ -410,26 +392,6 @@ function PropertyDetail() {
                 </div>
               </div>
 
-              {/* Estado de conexión del broker */}
-              <div className="broker-status">
-                <div className={`connection-indicator ${connectionStatus}`}>
-                  <FaWifi className="icon" />
-                  <span>
-                    {connectionStatus === 'connected' && 'Conectado al broker'}
-                    {connectionStatus === 'connecting' && 'Conectando...'}
-                    {connectionStatus === 'disconnected' && 'Desconectado'}
-                    {connectionStatus === 'error' && 'Error de conexión'}
-                  </span>
-                </div>
-                {connectionStatus === 'error' && (
-                  <button 
-                    className="btn btn-sm btn-outline"
-                    onClick={retryConnection}
-                  >
-                    Reintentar conexión
-                  </button>
-                )}
-              </div>
             </div>
 
             <div className="property-features">
@@ -501,16 +463,23 @@ function PropertyDetail() {
               </div>
             )}
 
-            {brokerError && (
+            {localRequestError && (
               <div className="alert alert-warning">
                 <FaExclamationTriangle className="alert-icon" />
-                {brokerError}
+                {localRequestError}
+              </div>
+            )}
+            
+            {purchaseError && (
+              <div className="alert alert-danger">
+                <FaExclamationTriangle className="alert-icon" />
+                {purchaseError}
               </div>
             )}
 
             {rentSuccess && (
               <div className="alert alert-success">
-                ¡Solicitud de visita enviada exitosamente al broker! Te contactaremos pronto.
+                ¡Solicitud de arriendo enviada exitosamente! Te redirigiremos a tus solicitudes.
               </div>
             )}
 
@@ -519,12 +488,12 @@ function PropertyDetail() {
                 <button 
                   className="btn btn-success btn-lg"
                   onClick={handleRent}
-                  disabled={renting || rentSuccess || !isConnected || availableVisits <= 0}
+                  disabled={renting || rentSuccess || availableVisits <= 0}
                 >
-                  {brokerRequestInProgress ? (
+                  {requestInProgress ? (
                     <>
                       <FaSpinner className="spinner" />
-                      Enviando al broker...
+                      Enviando solicitud...
                     </>
                   ) : renting ? (
                     <>
@@ -533,8 +502,6 @@ function PropertyDetail() {
                     </>
                   ) : rentSuccess ? (
                     'Solicitud Enviada'
-                  ) : !isConnected ? (
-                    'Sin conexión al broker'
                   ) : availableVisits <= 0 ? (
                     'Sin visitas disponibles'
                   ) : (

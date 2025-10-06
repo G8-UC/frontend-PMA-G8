@@ -19,7 +19,7 @@ En la pestaña "Settings" de tu aplicación:
 
 #### Allowed Callback URLs:
 ```
-http://localhost:3000, https://tu-dominio-frontend.com
+http://localhost:3000/callback, https://tu-dominio-frontend.com/callback
 ```
 
 #### Allowed Logout URLs:
@@ -44,7 +44,7 @@ Crea un archivo `.env` en la raíz del proyecto:
 # Auth0 Configuration
 REACT_APP_AUTH0_DOMAIN=tu-tenant.auth0.com
 REACT_APP_AUTH0_CLIENT_ID=tu-client-id
-REACT_APP_AUTH0_REDIRECT_URI=http://localhost:3000
+REACT_APP_AUTH0_REDIRECT_URI=http://localhost:3000/callback
 REACT_APP_AUTH0_AUDIENCE=tu-api-audience
 
 # Backend API
@@ -65,7 +65,7 @@ Para agregar el `group_id` al usuario:
 4. En "app_metadata" o "user_metadata", agrega:
 ```json
 {
-  "group_id": "G8"
+  "group_id": "8"
 }
 ```
 
@@ -77,7 +77,7 @@ Para incluir el `group_id` en el token automáticamente:
 ```javascript
 function (user, context, callback) {
   const namespace = 'custom:';
-  context.idToken[namespace + 'group_id'] = user.app_metadata && user.app_metadata.group_id || 'G8';
+  context.idToken[namespace + 'group_id'] = user.app_metadata && user.app_metadata.group_id || '8';
   callback(null, user, context);
 }
 ```
@@ -126,7 +126,7 @@ Authorization: Bearer <auth0-access-token>
 ## 📱 Experiencia de Usuario
 
 1. **Login**: Redirige a Auth0 Universal Login
-2. **Callback**: Procesa el token y redirige a /properties
+2. **Callback**: Procesa el token en `/callback` y redirige a `/properties`
 3. **Estado persistente**: Mantiene la sesión entre recargas
 4. **Logout**: Limpia la sesión y redirige al home
 
