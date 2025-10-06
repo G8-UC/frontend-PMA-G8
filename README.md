@@ -1,6 +1,6 @@
 # PropertyRental Frontend
 
-Aplicación React para gestión de propiedades con autenticación Auth0.
+Aplicación React para gestión de propiedades con autenticación Auth0. Para acceder a la versión demo en línea, ingrese a [PropertyMarket](https://www.ics2173-2025-2-paurovira.me)
 
 ## 🚀 Inicio Rápido
 
