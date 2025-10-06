@@ -129,12 +129,28 @@ class PropertyService {
     // No necesitamos duplicar la lógica aquí
   }
 
-  async getProperties(page = 1) {
+  async getProperties(page = 1, filters = {}) {
     try {
-      console.log(`Fetching properties from API: ${API_BASE_URL}/properties?page=${page}`);
+      // Construir parámetros de query según OpenAPI
+      const queryParams = new URLSearchParams();
+      queryParams.append('page', page);
+      queryParams.append('limit', 25); // Default limit según OpenAPI
       
-      // Llamada real al backend con paginación
-      const response = await axios.get(`${API_BASE_URL}/properties?page=${page}`, {
+      // Aplicar filtros según la especificación OpenAPI
+      if (filters.price) {
+        queryParams.append('price', filters.price);
+      }
+      if (filters.location) {
+        queryParams.append('location', filters.location);
+      }
+      if (filters.date) {
+        queryParams.append('date', filters.date);
+      }
+      
+      const url = `${API_BASE_URL}/properties?${queryParams}`;
+      
+      // Llamada real al backend con filtros
+      const response = await axios.get(url, {
         timeout: 10000, // 10 segundos de timeout
         headers: {
           'Content-Type': 'application/json',
@@ -142,11 +158,6 @@ class PropertyService {
         }
       });
       
-      console.log('Backend response status:', response.status);
-      console.log('Backend response:', response);
-      console.log('Response data:', response.data);
-      console.log('Response data type:', typeof response.data);
-      console.log('Is response.data array?', Array.isArray(response.data));
       
       // Verificar la estructura de la respuesta
       let properties = response.data;
@@ -155,17 +166,12 @@ class PropertyService {
       
       // Si la respuesta tiene una estructura anidada, extraer el array de propiedades
       if (properties && typeof properties === 'object' && !Array.isArray(properties)) {
-        console.log('Response has nested structure, extracting properties...');
-        
         if (Array.isArray(properties.data)) {
           properties = properties.data;
-          console.log('Found properties in data field');
         } else if (Array.isArray(properties.properties)) {
           properties = properties.properties;
-          console.log('Found properties in properties field');
         } else if (Array.isArray(properties.results)) {
           properties = properties.results;
-          console.log('Found properties in results field');
         }
         
         // Extraer metadatos de paginación si están disponibles
@@ -179,7 +185,6 @@ class PropertyService {
       
       // Asegurar que tenemos un array
       if (!Array.isArray(properties)) {
-        console.warn('Backend response is not an array, converting to array:', properties);
         properties = [];
       }
       
@@ -187,9 +192,6 @@ class PropertyService {
       if (totalPages === 1 && properties.length > 0) {
         hasMore = properties.length === 25; // Asumir que hay más si devuelve exactamente 25
       }
-      
-      console.log('Properties loaded from backend (page', page, '):', properties);
-      console.log('Pagination metadata - totalPages:', totalPages, 'hasMore:', hasMore);
       
       return {
         properties: properties,
@@ -199,19 +201,6 @@ class PropertyService {
       };
     } catch (error) {
       console.error('Error fetching properties from backend:', error);
-      
-      if (error.response) {
-        // El servidor respondió con un código de error
-        console.error('Server responded with error status:', error.response.status);
-        console.error('Error response data:', error.response.data);
-      } else if (error.request) {
-        // La petición se hizo pero no se recibió respuesta
-        console.error('No response received from server:', error.request);
-      } else {
-        // Algo más causó el error
-        console.error('Error setting up request:', error.message);
-      }
-      
       console.log('Using mock data as fallback');
       // Fallback a datos mock si el backend no está disponible
       const startIndex = (page - 1) * 25;
@@ -462,43 +451,6 @@ class PropertyService {
     }
   }
 
-  // Método para probar la conectividad con la API
-  async testApiConnection() {
-    try {
-      console.log('Testing API connection...');
-      const response = await axios.get(`${API_BASE_URL}/properties?page=1`, {
-        timeout: 5000,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
-      });
-      
-      console.log('API connection successful!');
-      console.log('Response status:', response.status);
-      console.log('Response data structure:', {
-        isArray: Array.isArray(response.data),
-        hasData: response.data?.data ? 'Yes' : 'No',
-        hasProperties: response.data?.properties ? 'Yes' : 'No',
-        hasResults: response.data?.results ? 'Yes' : 'No',
-        keys: Object.keys(response.data || {})
-      });
-      
-      return {
-        success: true,
-        status: response.status,
-        data: response.data
-      };
-    } catch (error) {
-      console.error('API connection test failed:', error);
-      return {
-        success: false,
-        error: error.message,
-        status: error.response?.status,
-        data: error.response?.data
-      };
-    }
-  }
 
   // Método para actualizar el cliente de Auth0 (llamar desde el contexto)
   setAuth0Client(auth0Client) {

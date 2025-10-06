@@ -3,25 +3,27 @@ import { useAppContext } from '../context/AppContext';
 import PropertyCard from '../components/properties/PropertyCard';
 import PropertyFilters from '../components/properties/PropertyFilters';
 import { propertyService } from '../services/propertyService';
-import { FaSpinner, FaWifi, FaExclamationTriangle } from 'react-icons/fa';
+import { FaSpinner } from 'react-icons/fa';
 import './Properties.css';
 
 function Properties() {
   const { state, dispatch } = useAppContext();
-  const [apiStatus, setApiStatus] = useState(null);
-  const [testingApi, setTestingApi] = useState(false);
 
   useEffect(() => {
     loadProperties(1);
   }, []);
 
-  const loadProperties = async (page = 1) => {
-    console.log(`Loading properties for page: ${page}`);
+  // Recargar propiedades cuando cambien los filtros
+  useEffect(() => {
+    if (state.filters && Object.keys(state.filters).length > 0) {
+      loadProperties(1, state.filters);
+    }
+  }, [state.filters]);
+
+  const loadProperties = async (page = 1, filters = {}) => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
-      const result = await propertyService.getProperties(page);
-      console.log('Properties received:', result);
-      console.log(`Page ${page}: ${result.properties.length} properties, hasMore: ${result.hasMore}`);
+      const result = await propertyService.getProperties(page, filters);
       
       dispatch({ type: 'SET_PROPERTIES', payload: result });
       dispatch({ type: 'SET_PAGE', payload: page });
@@ -32,31 +34,12 @@ function Properties() {
   };
 
   const handlePageChange = (page) => {
-    console.log(`Changing from page ${state.pagination.currentPage} to page ${page}`);
     if (page !== state.pagination.currentPage && page > 0) {
-      loadProperties(page);
+      loadProperties(page, state.filters);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
-  const testApiConnection = async () => {
-    setTestingApi(true);
-    setApiStatus(null);
-    
-    try {
-      const result = await propertyService.testApiConnection();
-      setApiStatus(result);
-      console.log('API test result:', result);
-    } catch (error) {
-      console.error('Error testing API:', error);
-      setApiStatus({
-        success: false,
-        error: error.message
-      });
-    } finally {
-      setTestingApi(false);
-    }
-  };
 
   // Para la paginación del servidor, mostramos todas las propiedades cargadas
   const filteredProperties = Array.isArray(state.filteredProperties) ? state.filteredProperties : [];
@@ -92,43 +75,6 @@ function Properties() {
         <div className="properties-header">
           <h1>Propiedades Disponibles</h1>
           <p>Encuentra tu hogar ideal entre nuestras {Array.isArray(state.properties) ? state.properties.length : 0} propiedades</p>
-          
-          {/* Botón de prueba de API */}
-          <div className="api-test-section">
-            <button 
-              className="btn btn-outline btn-sm"
-              onClick={testApiConnection}
-              disabled={testingApi}
-            >
-              {testingApi ? (
-                <>
-                  <FaSpinner className="spinner" />
-                  Probando API...
-                </>
-              ) : (
-                <>
-                  <FaWifi />
-                  Probar Conexión API
-                </>
-              )}
-            </button>
-            
-            {apiStatus && (
-              <div className={`api-status ${apiStatus.success ? 'success' : 'error'}`}>
-                {apiStatus.success ? (
-                  <>
-                    <FaWifi className="status-icon" />
-                    <span>API conectada exitosamente (Status: {apiStatus.status})</span>
-                  </>
-                ) : (
-                  <>
-                    <FaExclamationTriangle className="status-icon" />
-                    <span>Error de conexión: {apiStatus.error}</span>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
         </div>
 
         <PropertyFilters />

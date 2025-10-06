@@ -61,10 +61,15 @@ class PurchaseRequestService {
       queryParams.append('page', page);
       queryParams.append('limit', limit);
       
-      if (group_id) queryParams.append('group_id', group_id);
-      if (status) queryParams.append('status', status);
+      if (group_id) {
+        queryParams.append('group_id', group_id);
+      }
+      if (status) {
+        queryParams.append('status', status);
+      }
 
-      const response = await axios.get(`${API_BASE_URL}/purchase-requests?${queryParams}`);
+      const url = `${API_BASE_URL}/purchase-requests?${queryParams}`;
+      const response = await axios.get(url);
       return response.data;
     } catch (error) {
       console.error('Error fetching purchase requests:', error);

@@ -22,11 +22,14 @@ export function usePurchaseRequests(groupId = '8') {
       setLoading(true);
       setError(null);
 
+      // Combinar filtros actuales con los nuevos
+      const combinedFilters = { ...filters, ...newFilters };
+      
       const params = {
         page,
         limit: pagination.limit,
-        ...filters,
-        ...newFilters
+        group_id: combinedFilters.group_id || groupId,
+        status: combinedFilters.status || null
       };
 
       const response = await purchaseRequestService.getPurchaseRequests(params);
@@ -45,7 +48,7 @@ export function usePurchaseRequests(groupId = '8') {
     } finally {
       setLoading(false);
     }
-  }, [filters, pagination.limit]);
+  }, [filters, pagination.limit, groupId]);
 
   // Crear nueva solicitud
   const createRequest = useCallback(async (propertyId) => {
@@ -94,7 +97,7 @@ export function usePurchaseRequests(groupId = '8') {
   // Cargar datos iniciales
   useEffect(() => {
     loadRequests(1);
-  }, []);
+  }, [loadRequests]);
 
   // Obtener estadísticas por estado
   const getStatusStats = useCallback(() => {

@@ -25,6 +25,7 @@ function MyRentals() {
   } = usePurchaseRequests();
   
   const [showFilters, setShowFilters] = useState(false);
+  const [localFilter, setLocalFilter] = useState('');
 
   useEffect(() => {
     if (authLoading) return; // Esperar a que la autenticación termine de cargar
@@ -37,7 +38,36 @@ function MyRentals() {
 
   const handleStatusFilter = (status) => {
     applyFilters({ status: status === 'ALL' ? null : status });
+    // Limpiar filtro local cuando se cambie el filtro de estado
+    setLocalFilter('');
   };
+
+  // Filtro local como fallback - combina filtros de API y local
+  const getFilteredRequests = () => {
+    let filtered = requests;
+
+    // Aplicar filtro de estado si está activo
+    if (filters.status) {
+      filtered = filtered.filter(request => request.status === filters.status);
+    }
+
+    // Aplicar filtro de búsqueda local si está activo
+    if (localFilter.trim()) {
+      const searchTerm = localFilter.toLowerCase();
+      filtered = filtered.filter(request => {
+        return (
+          request.property_name?.toLowerCase().includes(searchTerm) ||
+          request.property_location?.toLowerCase().includes(searchTerm) ||
+          request.request_id?.toLowerCase().includes(searchTerm) ||
+          request.status?.toLowerCase().includes(searchTerm)
+        );
+      });
+    }
+
+    return filtered;
+  };
+
+  const filteredRequests = getFilteredRequests();
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -150,6 +180,23 @@ function MyRentals() {
                   </div>
                 </div>
                 
+                <div className="filter-group">
+                  <label>Búsqueda Local:</label>
+                  <div className="search-input">
+                    <FaSearch className="search-icon" />
+                    <input
+                      type="text"
+                      placeholder="Buscar por propiedad, ubicación o ID..."
+                      value={localFilter}
+                      onChange={(e) => setLocalFilter(e.target.value)}
+                      className="form-control"
+                    />
+                  </div>
+                  <small className="filter-help">
+                    Búsqueda instantánea en los resultados cargados
+                  </small>
+                </div>
+                
                 <div className="filter-actions">
                   <button className="clear-filters" onClick={clearFilters}>
                     Limpiar Filtros
@@ -188,10 +235,55 @@ function MyRentals() {
                 Ver Propiedades
               </Link>
             </div>
+          ) : filteredRequests.length === 0 ? (
+            <div className="empty-state">
+              <FaSearch className="empty-icon" />
+              <h3>No se encontraron resultados</h3>
+              <p>No hay solicitudes que coincidan con tu búsqueda.</p>
+              <button 
+                className="btn btn-outline" 
+                onClick={() => setLocalFilter('')}
+              >
+                Limpiar búsqueda
+              </button>
+            </div>
           ) : (
             <>
+              {(localFilter || filters.status) && (
+                <div className="search-results-info">
+                  <p>
+                    Mostrando {filteredRequests.length} de {requests.length} solicitudes
+                    {filters.status && ` (Estado: ${getStatusText(filters.status)})`}
+                    {localFilter && ` (Búsqueda: "${localFilter}")`}
+                  </p>
+                  <div className="active-filters">
+                    {filters.status && (
+                      <span className="filter-tag">
+                        Estado: {getStatusText(filters.status)}
+                        <button 
+                          onClick={() => handleStatusFilter('ALL')}
+                          className="remove-filter"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    )}
+                    {localFilter && (
+                      <span className="filter-tag">
+                        Búsqueda: "{localFilter}"
+                        <button 
+                          onClick={() => setLocalFilter('')}
+                          className="remove-filter"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
               <div className="rentals-list">
-                {requests.map((request) => (
+                {filteredRequests.map((request) => (
                   <div key={request.request_id} className="rental-card">
                     <div className="rental-header">
                       <div className="rental-info">
