@@ -125,8 +125,32 @@ class PropertyService {
   }
 
   setupAxiosInterceptors() {
-    // El interceptor ya está configurado en authService.js
-    // No necesitamos duplicar la lógica aquí
+    // Interceptor para incluir token de Auth0 en las requests
+    axios.interceptors.request.use(
+      async (config) => {
+        // Obtener token de Auth0 si está disponible
+        if (window.auth0Client && window.auth0Client.getAccessTokenSilently) {
+          try {
+            const token = await window.auth0Client.getAccessTokenSilently();
+            if (token) {
+              config.headers.Authorization = `Bearer ${token}`;
+              console.log('Auth token added to property request:', config.url);
+            } else {
+              console.log('No auth token available for property request:', config.url);
+            }
+          } catch (error) {
+            console.log('Could not get Auth0 token for property request:', config.url, error);
+          }
+        } else {
+          console.log('Auth0 client not available for property request:', config.url);
+        }
+        return config;
+      },
+      (error) => {
+        console.error('Property request interceptor error:', error);
+        return Promise.reject(error);
+      }
+    );
   }
 
   async getProperties(page = 1, filters = {}) {
