@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://nicoriquelmecti.space/api/v1';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://api.ics2173-2025-2-paurovira.me/api/v1';
 const AUTH_API_URL = `${API_BASE_URL}/auth`;
 
 class AuthService {

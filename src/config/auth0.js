@@ -1,9 +1,9 @@
 // Auth0 Configuration
 export const auth0Config = {
-  domain: process.env.REACT_APP_AUTH0_DOMAIN || 'your-domain.auth0.com',
-  clientId: process.env.REACT_APP_AUTH0_CLIENT_ID || 'your-client-id',
+  domain: process.env.REACT_APP_AUTH0_DOMAIN || 'dev-e84zztt540q7m8pi.us.auth0.com',
+  clientId: process.env.REACT_APP_AUTH0_CLIENT_ID || 'gL2wkeFJaLhPb6q4L6bp0mbp7JxjnMlw',
   redirectUri: process.env.REACT_APP_AUTH0_REDIRECT_URI || `${window.location.origin}/callback`,
-  audience: process.env.REACT_APP_AUTH0_AUDIENCE || 'https://nicoriquelmecti.space/api/v1', // Optional: para APIs
+  audience: process.env.REACT_APP_AUTH0_AUDIENCE || 'https://api.propertymarket.cl', // Optional: para APIs
   scope: 'openid profile email'
 };
 
