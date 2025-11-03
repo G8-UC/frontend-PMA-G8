@@ -13,6 +13,8 @@ function PropertyDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: authLoading } = useAuth0();
+  // adicional: user y getAccessTokenSilently para envío de notificaciones
+  const { user, getAccessTokenSilently } = useAuth0();
   const { createRequest, error: purchaseError } = usePurchaseRequests();
   const { getPriceInfo, calculate10PercentInCLP, formatPrice: formatUFPrice, refreshUFValue } = useUFConverter();
   const [property, setProperty] = useState(null);
@@ -27,6 +29,15 @@ function PropertyDetail() {
   const [visitPrice, setVisitPrice] = useState(null);
   const [priceInfo, setPriceInfo] = useState(null);
   const [loadingPriceInfo, setLoadingPriceInfo] = useState(false);
+
+  // Nuevo estado para manejar notificación por correo
+  const [requestId, setRequestId] = useState(null);
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [emailError, setEmailError] = useState('');
+
+  // Nuevo estado: opción del usuario para recibir correo al confirmar la visita
+  const [emailOptIn, setEmailOptIn] = useState(true);
 
   // Calcular información de visitas disponibles y precio (10% del arriendo)
   const calculateVisitInfo = useCallback(async (property) => {
@@ -133,6 +144,16 @@ function PropertyDetail() {
     loadProperty();
   }, [loadProperty]);
 
+  // Mostrar en consola el correo asociado a la cuenta de Auth0 cuando esté disponible
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    if (user?.email) {
+      console.log('Auth0 user email:', user.email);
+    } else {
+      console.log('Auth0 user object (sin email):', user);
+    }
+  }, [isAuthenticated, user]);
+
   const handleRent = async () => {
     if (!isAuthenticated) {
       navigate('/login');
@@ -156,8 +177,20 @@ function PropertyDetail() {
       // Crear solicitud de compra usando el nuevo servicio
       const response = await createRequest(propertyIdentifier);
       console.log('Purchase request created:', response);
-      
+
+      // Guardar requestId si el backend lo retorna (compatibilidad con varias keys)
+      const returnedId = response?.id || response?.requestId || response?.request_id || null;
+      setRequestId(returnedId);
+
       setRentSuccess(true);
+
+      // Si el usuario indicó que quiere notificación por correo, enviarla automáticamente
+      if (emailOptIn) {
+        // No bloquear la navegación; se intenta enviar en background
+        handleSendEmail(returnedId).catch(err => {
+          console.error('Error auto-enviando email tras solicitud:', err);
+        });
+      }
       
       // Redirigir a la lista de solicitudes después de un breve delay
       setTimeout(() => {
@@ -170,6 +203,84 @@ function PropertyDetail() {
     } finally {
       setRenting(false);
       setRequestInProgress(false);
+    }
+  };
+
+  // Nueva función para enviar notificación por correo (se usa cuando la compra/solicitud está completada)
+  const handleSendEmail = async (requestIdParam = null) => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    const idToUse = requestIdParam || requestId;
+    if (!idToUse && !property) {
+      setEmailError('No se encontró la información de la solicitud para notificar.');
+      return;
+    }
+
+    try {
+      setEmailSending(true);
+      setEmailError('');
+
+      // Obtener token si se usa autenticación para el endpoint de notificaciones
+      let token;
+      try {
+        token = await getAccessTokenSilently();
+      } catch (err) {
+        // Si falla obtener token, continuamos sin él (dependiendo del backend puede ser público)
+        token = null;
+      }
+
+      // Asegurar que tenemos el email del usuario.
+      // Normalmente useAuth0().user contiene la claim "email" si en el login se pidió scope "email".
+      // Si no está, intentar obtener /userinfo desde Auth0 usando el token (requiere REACT_APP_AUTH0_DOMAIN en env).
+      let userEmail = user?.email || null;
+      if (!userEmail && token) {
+        try {
+          const domain = process.env.REACT_APP_AUTH0_DOMAIN;
+          if (domain) {
+            const uiRes = await fetch(`https://${domain}/userinfo`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            if (uiRes.ok) {
+              const ui = await uiRes.json();
+              userEmail = ui?.email || userEmail;
+            }
+          }
+        } catch (err) {
+          console.warn('No se pudo obtener userinfo desde Auth0:', err);
+        }
+      }
+
+      const payload = {
+        requestId: idToUse,
+        propertyId: property?.id || property?.url,
+        user: {
+          email: userEmail,
+           name: user?.name
+        }
+      };
+
+      const res = await fetch('/api/notify-visit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => null);
+        throw new Error(text || `Error ${res.status} al enviar notificación`);
+      }
+
+      setEmailSent(true);
+    } catch (err) {
+      console.error('Error sending email notification:', err);
+      setEmailError(err.message || 'Error al enviar notificación por correo');
+    } finally {
+      setEmailSending(false);
     }
   };
 
@@ -481,39 +592,84 @@ function PropertyDetail() {
               </div>
             )}
 
+            {/* Botón para enviar notificación por correo una vez creada la solicitud */}
+            {rentSuccess && (
+              <div className="email-notify">
+                {emailError && (
+                  <div className="alert alert-danger">
+                    {emailError}
+                  </div>
+                )}
+                {emailSent ? (
+                  <div className="alert alert-info">
+                    Notificación por correo enviada.
+                  </div>
+                ) : (
+                  <button
+                    className="btn btn-outline-primary"
+                    onClick={handleSendEmail}
+                    disabled={emailSending}
+                    title="Enviar notificación por correo a los usuarios que solicitaron la visita"
+                  >
+                    {emailSending ? (
+                      <>
+                        <FaSpinner className="spinner" /> Enviando correo...
+                      </>
+                    ) : (
+                      'Enviar notificación por correo'
+                    )}
+                  </button>
+                )}
+              </div>
+            )}
+
             <div className="property-actions">
               {isAuthenticated ? (
-                <button 
-                  className="btn btn-success btn-lg"
-                  onClick={handleRent}
-                  disabled={renting || rentSuccess || availableVisits <= 0}
-                >
-                  {requestInProgress ? (
-                    <>
-                      <FaSpinner className="spinner" />
-                      Enviando solicitud...
-                    </>
-                  ) : renting ? (
-                    <>
-                      <FaSpinner className="spinner" />
-                      Procesando...
-                    </>
-                  ) : rentSuccess ? (
-                    'Solicitud Enviada'
-                  ) : availableVisits <= 0 ? (
-                    'Sin visitas disponibles'
-                  ) : (
-                    `Solicitar Visita - ${visitPrice ? (
-                      // Si el precio viene en UF con equivalente en CLP usamos ufAmount
-                      visitPrice.clpEquivalent ?
-                        `${visitPrice.ufAmount} UF` :
-                        // En otros casos mostramos amount con formato según moneda
-                        (visitPrice.currency === 'UF' ?
-                          `${visitPrice.ufAmount ?? visitPrice.amount} UF` :
-                          `$${(visitPrice.amount ?? 0).toLocaleString('es-CL')} ${visitPrice.currency}`)
-                    ) : 'Precio calculando...'}`
+                <div className="action-with-optin" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  {/* Casilla para que el usuario indique si quiere recibir correo */}
+                  {!rentSuccess && (
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.95rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={emailOptIn}
+                        onChange={(e) => setEmailOptIn(e.target.checked)}
+                      />
+                      <span>Enviar notificación por correo</span>
+                    </label>
                   )}
-                </button>
+
+                  <button 
+                    className="btn btn-success btn-lg"
+                    onClick={handleRent}
+                    disabled={renting || rentSuccess || availableVisits <= 0}
+                  >
+                    {requestInProgress ? (
+                      <>
+                        <FaSpinner className="spinner" />
+                        Enviando solicitud...
+                      </>
+                    ) : renting ? (
+                      <>
+                        <FaSpinner className="spinner" />
+                        Procesando...
+                      </>
+                    ) : rentSuccess ? (
+                      'Solicitud Enviada'
+                    ) : availableVisits <= 0 ? (
+                      'Sin visitas disponibles'
+                    ) : (
+                      `Solicitar Visita - ${visitPrice ? (
+                        // Si el precio viene en UF con equivalente en CLP usamos ufAmount
+                        visitPrice.clpEquivalent ?
+                          `${visitPrice.ufAmount} UF` :
+                          // En otros casos mostramos amount con formato según moneda
+                          (visitPrice.currency === 'UF' ?
+                            `${visitPrice.ufAmount ?? visitPrice.amount} UF` :
+                            `$${(visitPrice.amount ?? 0).toLocaleString('es-CL')} ${visitPrice.currency}`)
+                      ) : 'Precio calculando...'}` 
+                    )}
+                  </button>
+                </div>
               ) : (
                 <button 
                   className="btn btn-primary btn-lg"
