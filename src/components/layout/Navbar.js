@@ -15,7 +15,14 @@ function Navbar() {
   };
 
   const handleLogout = () => {
-    logout();
+    // Pasar returnTo explícito para evitar redirecciones a localhost
+    // auth0-react v2 espera logout({ logoutParams: { returnTo } })
+    try {
+      logout({ logoutParams: { returnTo: window.location.origin } });
+    } catch (err) {
+      // Fallback simple
+      logout();
+    }
   };
 
   const isActive = (path) => {
