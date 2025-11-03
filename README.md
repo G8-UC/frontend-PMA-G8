@@ -124,6 +124,37 @@ npm run eject      # Eject (no recomendado)
 - ✅ **Responsive design** para móviles
 - ✅ **Cache inteligente** para valores UF
 
+## 🚀 Despliegue a Producción
+
+### CI/CD con GitHub Actions y AWS CloudFront
+
+El proyecto incluye configuración completa para despliegue automático:
+
+- ✅ **GitHub Actions** workflow para CI/CD
+- ✅ **AWS S3** para hosting estático
+- ✅ **CloudFront** para distribución global
+- ✅ **Scripts automáticos** de configuración
+- ✅ **Políticas IAM** pre-configuradas
+
+📚 **Ver documentación completa:**
+- [`DEPLOYMENT.md`](./DEPLOYMENT.md) - Guía de despliegue paso a paso
+- [`ARCHITECTURE.md`](./ARCHITECTURE.md) - Arquitectura y diagramas
+
+### Configuración Rápida
+
+```bash
+# 1. Configurar infraestructura AWS
+./scripts/setup-aws-infrastructure.sh
+
+# 2. Configurar secrets en GitHub
+# Settings → Secrets → Actions
+
+# 3. Hacer push a main/master
+git push origin main
+
+# ¡Deployment automático! 🎉
+```
+
 ## 🚨 Solución de Problemas
 
 ### Error de CORS con UF
@@ -210,6 +241,15 @@ rm -rf build              # Eliminar build anterior
 npm install               # Reinstalar dependencias
 ```
 
+## 📚 Documentación Completa
+
+Para más información detallada, consulta:
+
+- **📋 [Índice de Documentación](docs/INDEX.md)** - Guía completa de toda la documentación
+- **🔐 [Configuración Auth0](AUTH0_SETUP.md)** - Setup de autenticación
+- **🚀 [Guía de Despliegue](DEPLOYMENT.md)** - Deploy a AWS CloudFront
+- **🏗️ [Arquitectura](ARCHITECTURE.md)** - Diagramas y arquitectura del sistema
+
 ## 📞 Soporte
 
 Para problemas o dudas:
@@ -217,6 +257,7 @@ Para problemas o dudas:
 2. Verificar configuración de Auth0
 3. Comprobar conectividad con backend
 4. Ejecutar script de configuración: `./setup.sh`
+5. Consultar documentación completa en [docs/INDEX.md](docs/INDEX.md)
 
 ---
 
