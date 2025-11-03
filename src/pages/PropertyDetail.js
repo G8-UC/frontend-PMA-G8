@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
-import { useAppContext } from '../context/AppContext';
 import { usePurchaseRequests } from '../hooks/usePurchaseRequests';
 import { useUFConverter } from '../hooks/useUFConverter';
 import { propertyService } from '../services/propertyService';
-import { FaBed, FaBath, FaRuler, FaMapMarkerAlt, FaCalendarAlt, FaArrowLeft, FaSpinner, FaExpand, FaWifi, FaExclamationTriangle, FaSync } from 'react-icons/fa';
+import { FaBed, FaBath, FaRuler, FaMapMarkerAlt, FaCalendarAlt, FaArrowLeft, FaSpinner, FaExpand, FaExclamationTriangle, FaSync } from 'react-icons/fa';
 import LoadingScreen from '../components/common/LoadingScreen';
 import ImageModal from '../components/common/ImageModal';
 import './PropertyDetail.css';
@@ -13,10 +12,9 @@ import './PropertyDetail.css';
 function PropertyDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, isAuthenticated, isLoading: authLoading, getAccessTokenSilently } = useAuth0();
-  const { state, dispatch } = useAppContext();
-  const { createRequest, loading: requestLoading, error: purchaseError } = usePurchaseRequests();
-  const { ufValue, getPriceInfo, calculate10PercentInCLP, formatPrice: formatUFPrice, refreshUFValue } = useUFConverter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth0();
+  const { createRequest, error: purchaseError } = usePurchaseRequests();
+  const { getPriceInfo, calculate10PercentInCLP, formatPrice: formatUFPrice, refreshUFValue } = useUFConverter();
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -30,48 +28,8 @@ function PropertyDetail() {
   const [priceInfo, setPriceInfo] = useState(null);
   const [loadingPriceInfo, setLoadingPriceInfo] = useState(false);
 
-  useEffect(() => {
-    loadProperty();
-  }, [id]);
-
-  const loadProperty = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      
-      const propertyId = decodeURIComponent(id);
-      console.log('Loading property with id:', propertyId);
-      
-      // Verificar si es un UUID (nuevo formato) o URL (formato anterior)
-      let foundProperty;
-      if (propertyId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-        // Es un UUID, usar el nuevo método
-        foundProperty = await propertyService.getPropertyById(propertyId);
-      } else {
-        // Es una URL, usar el método anterior para compatibilidad
-        foundProperty = await propertyService.getPropertyByUrl(propertyId);
-      }
-      
-      if (foundProperty) {
-        console.log('Property loaded successfully:', foundProperty);
-        console.log('Available visits from backend:', foundProperty.available_visits);
-        setProperty(foundProperty);
-        
-        // Calcular información de visitas (ahora async)
-        await calculateVisitInfo(foundProperty);
-      } else {
-        setError('Propiedad no encontrada');
-      }
-    } catch (err) {
-      console.error('Error loading property:', err);
-      setError('No se pudo cargar la propiedad: ' + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Calcular información de visitas disponibles y precio (10% del arriendo)
-  const calculateVisitInfo = async (property) => {
+  const calculateVisitInfo = useCallback(async (property) => {
     try {
       setLoadingPriceInfo(true);
       
@@ -133,7 +91,47 @@ function PropertyDetail() {
     } finally {
       setLoadingPriceInfo(false);
     }
-  };
+  }, [getPriceInfo, calculate10PercentInCLP]);
+
+  const loadProperty = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const propertyId = decodeURIComponent(id);
+      console.log('Loading property with id:', propertyId);
+      
+      // Verificar si es un UUID (nuevo formato) o URL (formato anterior)
+      let foundProperty;
+      if (propertyId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+        // Es un UUID, usar el nuevo método
+        foundProperty = await propertyService.getPropertyById(propertyId);
+      } else {
+        // Es una URL, usar el método anterior para compatibilidad
+        foundProperty = await propertyService.getPropertyByUrl(propertyId);
+      }
+      
+      if (foundProperty) {
+        console.log('Property loaded successfully:', foundProperty);
+        console.log('Available visits from backend:', foundProperty.available_visits);
+        setProperty(foundProperty);
+        
+        // Calcular información de visitas (ahora async)
+        await calculateVisitInfo(foundProperty);
+      } else {
+        setError('Propiedad no encontrada');
+      }
+    } catch (err) {
+      console.error('Error loading property:', err);
+      setError('No se pudo cargar la propiedad: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [id, calculateVisitInfo]);
+
+  useEffect(() => {
+    loadProperty();
+  }, [loadProperty]);
 
   const handleRent = async () => {
     if (!isAuthenticated) {

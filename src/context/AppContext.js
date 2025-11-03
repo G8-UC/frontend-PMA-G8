@@ -87,16 +87,6 @@ function appReducer(state, action) {
         userRequests: [...state.userRequests, action.payload] 
       };
     
-    case 'UPDATE_REQUEST_STATUS':
-      return {
-        ...state,
-        userRequests: state.userRequests.map(request =>
-          request.request_id === action.payload.request_id
-            ? { ...request, status: action.payload.status, reason: action.payload.reason }
-            : request
-        )
-      };
-    
     case 'UPDATE_WALLET':
       return { 
         ...state, 

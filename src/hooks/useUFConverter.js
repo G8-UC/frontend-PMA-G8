@@ -7,11 +7,6 @@ export function useUFConverter() {
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
 
-  // Cargar valor de UF al inicializar
-  useEffect(() => {
-    loadUFValue();
-  }, []);
-
   const loadUFValue = useCallback(async () => {
     try {
       setLoading(true);
@@ -28,6 +23,11 @@ export function useUFConverter() {
       setLoading(false);
     }
   }, []);
+
+  // Cargar valor de UF al inicializar
+  useEffect(() => {
+    loadUFValue();
+  }, [loadUFValue]);
 
   const convertUFToCLP = useCallback(async (ufAmount) => {
     try {

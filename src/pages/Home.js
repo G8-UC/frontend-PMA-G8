@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FaSearch, FaHome, FaMapMarkerAlt, FaUsers } from 'react-icons/fa';
+import { FaSearch } from 'react-icons/fa';
 import './Home.css';
 
 function Home() {

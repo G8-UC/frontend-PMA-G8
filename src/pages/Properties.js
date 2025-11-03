@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { useAppContext } from '../context/AppContext';
 import PropertyCard from '../components/properties/PropertyCard';
 import PropertyFilters from '../components/properties/PropertyFilters';
@@ -9,18 +9,7 @@ import './Properties.css';
 function Properties() {
   const { state, dispatch } = useAppContext();
 
-  useEffect(() => {
-    loadProperties(1);
-  }, []);
-
-  // Recargar propiedades cuando cambien los filtros
-  useEffect(() => {
-    if (state.filters && Object.keys(state.filters).length > 0) {
-      loadProperties(1, state.filters);
-    }
-  }, [state.filters]);
-
-  const loadProperties = async (page = 1, filters = {}) => {
+  const loadProperties = useCallback(async (page = 1, filters = {}) => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
       const result = await propertyService.getProperties(page, filters);
@@ -31,7 +20,18 @@ function Properties() {
       console.error('Error loading properties:', error);
       dispatch({ type: 'SET_ERROR', payload: 'Error al cargar las propiedades' });
     }
-  };
+  }, [dispatch]);
+
+  useEffect(() => {
+    loadProperties(1);
+  }, [loadProperties]);
+
+  // Recargar propiedades cuando cambien los filtros
+  useEffect(() => {
+    if (state.filters && Object.keys(state.filters).length > 0) {
+      loadProperties(1, state.filters);
+    }
+  }, [state.filters, loadProperties]);
 
   const handlePageChange = (page) => {
     if (page !== state.pagination.currentPage && page > 0) {

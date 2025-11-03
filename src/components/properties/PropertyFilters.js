@@ -8,27 +8,6 @@ function PropertyFilters() {
   const { filters } = state;
 
   const handleFilterChange = (field, value) => {
-    // Mapear filtros locales a filtros de API según OpenAPI
-    let apiFilter = {};
-    
-    switch (field) {
-      case 'maxPrice':
-        // El API espera 'price' como precio máximo
-        apiFilter = { price: value };
-        break;
-      case 'location':
-        // El API espera 'location' como filtro de ubicación
-        apiFilter = { location: value };
-        break;
-      case 'date':
-        // El API espera 'date' como filtro de fecha (YYYY-MM-DD)
-        apiFilter = { date: value };
-        break;
-      default:
-        // Para otros filtros, mantener el mapeo local
-        apiFilter = { [field]: value };
-    }
-    
     dispatch({
       type: 'UPDATE_FILTERS',
       payload: { [field]: value }
