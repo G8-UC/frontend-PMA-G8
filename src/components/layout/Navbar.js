@@ -22,12 +22,12 @@ function Navbar() {
     try {
       logoutFromContext();
     } catch (err) {
-      // Fallback: si algo falla, intentar llamar al logout del SDK directamente
+      // Fallback: registrar y redirigir a la página de inicio
+      console.error('Logout failed:', err);
       try {
-        const { logout } = useAuth0();
-        logout({ logoutParams: { returnTo: window.location.origin } });
+        window.location.href = '/';
       } catch (e) {
-        console.error('Logout failed:', e);
+        // nothing else we can do
       }
     }
   };
