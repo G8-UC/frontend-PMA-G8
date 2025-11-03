@@ -505,11 +505,15 @@ function PropertyDetail() {
                   ) : availableVisits <= 0 ? (
                     'Sin visitas disponibles'
                   ) : (
-                    `Solicitar Visita - ${visitPrice ? 
-                      (visitPrice.currency === 'UF' ? 
-                        `${visitPrice.amount} UF` : 
-                        `$${visitPrice.amount.toLocaleString('es-CL')} ${visitPrice.currency}`
-                      ) : 'Precio calculando...'}`
+                    `Solicitar Visita - ${visitPrice ? (
+                      // Si el precio viene en UF con equivalente en CLP usamos ufAmount
+                      visitPrice.clpEquivalent ?
+                        `${visitPrice.ufAmount} UF` :
+                        // En otros casos mostramos amount con formato según moneda
+                        (visitPrice.currency === 'UF' ?
+                          `${visitPrice.ufAmount ?? visitPrice.amount} UF` :
+                          `$${(visitPrice.amount ?? 0).toLocaleString('es-CL')} ${visitPrice.currency}`)
+                    ) : 'Precio calculando...'}`
                   )}
                 </button>
               ) : (

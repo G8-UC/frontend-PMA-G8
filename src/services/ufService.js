@@ -1,7 +1,10 @@
 import axios from 'axios';
 
 // API para obtener el valor de la UF
-const UF_API_URL = 'https://mindicador.cl/api/uf';
+// Usamos ruta relativa para aprovechar el proxy de desarrollo (Create React App)
+// En desarrollo: package.json -> "proxy": "https://mindicador.cl"
+// En producción debe resolverse mediante un proxy server-side o endpoint propio
+const UF_API_URL = '/api/uf';
 
 class UFService {
   constructor() {
@@ -51,7 +54,15 @@ class UFService {
       }
 
     } catch (error) {
-      console.error('Error fetching UF value:', error);
+      // Mejorar logging para tener más contexto (status, data)
+      try {
+        const status = error.response && error.response.status;
+        const statusText = error.response && error.response.statusText;
+        const data = error.response && error.response.data;
+        console.error('Error fetching UF value:', error.message || error.toString(), { status, statusText, data });
+      } catch (logErr) {
+        console.error('Error fetching UF value (logging failed):', error);
+      }
       
       // Si hay un valor en cache, usarlo como fallback
       if (this.cachedUFValue) {
