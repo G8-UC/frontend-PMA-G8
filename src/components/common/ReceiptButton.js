@@ -1,7 +1,7 @@
 // src/components/common/ReceiptButton.js
 import React, { useState } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
-import { purchaseRequestService } from "../services/purchaseRequestservice"; // <-- Ojo con el nombre del archivo
+import { purchaseRequestService } from "../../services/purchaseRequestService"; 
 import "./ReceiptButton.css";
 
 export default function ReceiptButton({ requestId, status, disabled, onSuccess }) {
