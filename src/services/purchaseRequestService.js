@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // URL base del backend (por defecto apunta a localhost para desarrollo)
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://api.ics2173-2025-2-paurovira.me/api/v1';
 
 class PurchaseRequestService {
   constructor() {
