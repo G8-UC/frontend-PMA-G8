@@ -24,7 +24,8 @@ export default function WebpayStatus() {
     const fetchStatus = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`/api/webpay/status?token_ws=${encodeURIComponent(token)}`);
+        const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+        const res = await fetch(`${API_BASE}/webpay/status?token_ws=${encodeURIComponent(token)}`);
         if (!res.ok) {
           const txt = await res.text().catch(() => null);
           throw new Error(txt || `Error ${res.status}`);

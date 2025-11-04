@@ -145,6 +145,8 @@ function PropertyDetail() {
     loadProperty();
   }, [loadProperty]);
 
+  
+
   // Mostrar en consola el correo asociado a la cuenta de Auth0 cuando esté disponible
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -188,11 +190,28 @@ function PropertyDetail() {
 
       setRentSuccess(true);
 
-      // Si recibimos URL de WebPay, redirigimos al usuario para completar el pago
+      // Si recibimos URL de WebPay, POSTEAMOS token_ws al endpoint de Webpay
       if (webpayUrl) {
-        // Abrir en la misma ventana para que WebPay pueda redirigir de vuelta al frontend
-        window.location.href = webpayUrl;
-        return;
+        // Construir un formulario invisible y enviarlo por POST con token_ws
+        try {
+          const tokenValue = webpayToken || response?.token || response?.webpay_token || null;
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = webpayUrl;
+          form.style.display = 'none';
+
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = 'token_ws';
+          input.value = tokenValue;
+          form.appendChild(input);
+
+          document.body.appendChild(form);
+          form.submit();
+          return; // la página se redirige a WebPay
+        } catch (err) {
+          console.error('Error submitting form to WebPay:', err);
+        }
       } else if (webpayToken) {
         // Si solo tenemos token, redirigir a una ruta que muestre el estado esperando commit
         window.location.href = `/webpay/status?token_ws=${encodeURIComponent(webpayToken)}`;
@@ -360,6 +379,8 @@ function PropertyDetail() {
       </div>
     );
   }
+
+  
 
   if (!property) {
     return (
@@ -652,6 +673,8 @@ function PropertyDetail() {
                       <span>Enviar notificación por correo</span>
                     </label>
                   )}
+
+                  
 
                   <button 
                     className="btn btn-success btn-lg"
