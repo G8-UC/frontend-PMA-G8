@@ -9,6 +9,7 @@ import Properties from './pages/Properties';
 import Login from './pages/LoginNew';
 import MyRentals from './pages/MyRentals';
 import PropertyDetail from './pages/PropertyDetail';
+import WebpayStatus from './pages/WebpayStatus';
 import AuthCallback from './pages/AuthCallback';
 import LoadingScreen from './components/common/LoadingScreen';
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -44,6 +45,7 @@ function Auth0Setup() {
                 </ProtectedRoute>
               } 
             />
+            <Route path="/webpay/status" element={<WebpayStatus />} />
             <Route path="/loading" element={<LoadingScreen />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

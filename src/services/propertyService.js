@@ -115,7 +115,8 @@ const mockProperties = [
   }
 ];
 
-// URL base del backend
+// URL base del backend. En desarrollo preferimos apuntar al backend local.
+// Puedes cambiarlo con REACT_APP_API_URL en .env
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://api.ics2173-2025-2-paurovira.me/api/v1';
 
 class PropertyService {

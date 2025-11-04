@@ -222,7 +222,7 @@ function MyRentals() {
           ) : error ? (
             <div className="error-state">
               <FaExclamationTriangle />
-              <p>{error}</p>
+              <p>{typeof error === 'string' ? error : (error && (error.message || String(error)))}</p>
               <button onClick={refresh} className="retry-btn">
                 Reintentar
               </button>

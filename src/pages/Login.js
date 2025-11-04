@@ -201,7 +201,7 @@ function Login() {
 
             {error && (
               <div className="alert alert-error">
-                {error}
+                {typeof error === 'string' ? error : (error && (error.message || String(error)))}
               </div>
             )}
 
