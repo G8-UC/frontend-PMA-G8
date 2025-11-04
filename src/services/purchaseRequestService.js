@@ -104,6 +104,21 @@ class PurchaseRequestService {
       throw error;
     }
   }
+   // Generar/obtener URL de boleta para una compra VALIDADA
+  async generateReceipt(requestId) {
+    try {
+      const url = `${API_BASE_URL}/purchase-requests/${requestId}/receipt`;
+      const { data } = await axios.post(url);
+      // backend puede devolver receipt_url | publicUrl | url
+      return data?.receipt_url || data?.publicUrl || data?.url || null;
+    } catch (error) {
+      console.error('Error generating receipt:', error);
+      // Propaga un mensaje legible
+      const msg = error?.response?.data?.message || error?.message || 'No fue posible generar la boleta';
+      throw new Error(msg);
+    }
+  }
+
 
   // Obtener estadísticas de solicitudes
   async getPurchaseRequestStats(groupId = '8') {

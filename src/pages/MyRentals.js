@@ -5,6 +5,7 @@ import { usePurchaseRequests } from '../hooks/usePurchaseRequests';
 import { FaMapMarkerAlt, FaCalendarAlt, FaSpinner, FaHome, FaFilter, FaSearch, FaChevronLeft, FaChevronRight, FaCheckCircle, FaTimesCircle, FaClock, FaExclamationTriangle } from 'react-icons/fa';
 import LoadingScreen from '../components/common/LoadingScreen';
 import './MyRentals.css';
+import ReceiptButton from '../components/common/ReceiptButton';
 
 function MyRentals() {
   const { isAuthenticated, isLoading: authLoading } = useAuth0();
@@ -338,6 +339,15 @@ function MyRentals() {
                       >
                         Ver Propiedad
                       </Link>
+                       {['VALIDATED', 'ACCEPTED'].includes(request.status) && (
+                         <div style={{ marginLeft: 8 }}>
+                           <ReceiptButton
+                             requestId={request.request_id}
+                             status={request.status}
+                             onSuccess={(url) => console.log('Boleta lista:', url)}
+                           />
+                         </div>
+                       )}
                     </div>
                   </div>
                 ))}

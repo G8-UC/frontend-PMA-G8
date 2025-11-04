@@ -1,0 +1,12 @@
+.receipt-btn-wrapper { display: inline-flex; flex-direction: column; gap: 6px; }
+.receipt-btn {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(90deg, #5b7cfa, #7a5bfa);
+  color: #fff;
+}
+.receipt-btn[disabled] { opacity: 0.6; cursor: not-allowed; }
+.receipt-error { color: #d32f2f; font-size: 0.9rem; margin: 0; }
