@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
 import { usePurchaseRequests } from '../hooks/usePurchaseRequests';
+import { purchaseRequestService } from '../services/purchaseRequestService';
 import { useUFConverter } from '../hooks/useUFConverter';
 import { propertyService } from '../services/propertyService';
 import { FaBed, FaBath, FaRuler, FaMapMarkerAlt, FaCalendarAlt, FaArrowLeft, FaSpinner, FaExpand, FaExclamationTriangle, FaSync } from 'react-icons/fa';
@@ -173,16 +174,30 @@ function PropertyDetail() {
       
       // Usar ID si está disponible, sino usar URL para compatibilidad
       const propertyIdentifier = property.id || property.url;
-      
-      // Crear solicitud de compra usando el nuevo servicio
-      const response = await createRequest(propertyIdentifier);
-      console.log('Purchase request created:', response);
 
-      // Guardar requestId si el backend lo retorna (compatibilidad con varias keys)
-      const returnedId = response?.id || response?.requestId || response?.request_id || null;
+      // Iniciar compra vía WebPay: backend devolverá webpay_url y token
+      const response = await purchaseRequestService.createWebpayPurchase(propertyIdentifier);
+      console.log('WebPay init response:', response);
+
+      const webpayUrl = response?.webpay_url || response?.url || null;
+      const webpayToken = response?.webpay_token || response?.token || null;
+
+      // Guardar requestId si el backend lo retorna
+      const returnedId = response?.request_id || response?.requestId || response?.request_id || response?.id || null;
       setRequestId(returnedId);
 
       setRentSuccess(true);
+
+      // Si recibimos URL de WebPay, redirigimos al usuario para completar el pago
+      if (webpayUrl) {
+        // Abrir en la misma ventana para que WebPay pueda redirigir de vuelta al frontend
+        window.location.href = webpayUrl;
+        return;
+      } else if (webpayToken) {
+        // Si solo tenemos token, redirigir a una ruta que muestre el estado esperando commit
+        window.location.href = `/webpay/status?token_ws=${encodeURIComponent(webpayToken)}`;
+        return;
+      }
 
       // Si el usuario indicó que quiere notificación por correo, enviarla automáticamente
       if (emailOptIn) {
@@ -568,8 +583,8 @@ function PropertyDetail() {
 
             {error && !loading && (
               <div className="alert alert-danger">
-                {error}
-              </div>
+                  {typeof error === 'string' ? error : (error && (error.message || String(error)))}
+                </div>
             )}
 
             {localRequestError && (
@@ -582,7 +597,7 @@ function PropertyDetail() {
             {purchaseError && (
               <div className="alert alert-danger">
                 <FaExclamationTriangle className="alert-icon" />
-                {purchaseError}
+                {typeof purchaseError === 'string' ? purchaseError : (purchaseError && (purchaseError.message || String(purchaseError)))}
               </div>
             )}
 

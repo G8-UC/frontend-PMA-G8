@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// URL base del backend
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://api.ics2173-2025-2-paurovira.me/api/v1';
+// URL base del backend (por defecto apunta a localhost para desarrollo)
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
 
 class PurchaseRequestService {
   constructor() {
@@ -49,6 +49,22 @@ class PurchaseRequestService {
       return response.data;
     } catch (error) {
       console.error('Error creating purchase request:', error);
+      throw error;
+    }
+  }
+
+  // Iniciar compra vía WebPay: crea la PurchaseRequest con deposit_token, publica MQTT y devuelve URL/token para redirigir
+  async createWebpayPurchase(propertyId, groupId = '8') {
+    try {
+      const payload = {
+        group_id: groupId,
+        property_id: propertyId
+      };
+
+      const response = await axios.post(`${API_BASE_URL}/compra/webpay`, payload);
+      return response.data;
+    } catch (error) {
+      console.error('Error initiating WebPay purchase:', error);
       throw error;
     }
   }
