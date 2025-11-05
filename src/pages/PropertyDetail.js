@@ -16,7 +16,7 @@ function PropertyDetail() {
   const { isAuthenticated, isLoading: authLoading } = useAuth0();
   // adicional: user y getAccessTokenSilently para envío de notificaciones
   const { user, getAccessTokenSilently } = useAuth0();
-  const { createRequest, error: purchaseError } = usePurchaseRequests();
+  const { error: purchaseError } = usePurchaseRequests();
   const { getPriceInfo, calculate10PercentInCLP, formatPrice: formatUFPrice, refreshUFValue } = useUFConverter();
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
