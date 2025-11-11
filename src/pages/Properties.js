@@ -5,6 +5,7 @@ import PropertyFilters from '../components/properties/PropertyFilters';
 import { propertyService } from '../services/propertyService';
 import { getUserRecommendations } from '../services/recommendations';
 import { FaSpinner } from 'react-icons/fa';
+import { useAuth0 } from '@auth0/auth0-react';
 import './Properties.css';
 
 function Properties() {
@@ -44,9 +45,11 @@ function Properties() {
     }
   };
 
-  const userId = '6'; // Reemplaza con el ID del usuario autenticado si es necesario
-    useEffect(() => {
-    // si en algún momento quieres atar esto a Auth0, acá cambiarías userId
+  const { user, isAuthenticated } = useAuth0();
+  const userId = user?.sub;
+  useEffect(() => {
+    if (!userId || !isAuthenticated) return;
+
     const fetchRecs = async () => {
       try {
         setLoadingRecs(true);
@@ -62,8 +65,7 @@ function Properties() {
     };
 
     fetchRecs();
-  }, [userId]);
-
+  }, [userId, isAuthenticated]);
 
 
   // Para la paginación del servidor, mostramos todas las propiedades cargadas
