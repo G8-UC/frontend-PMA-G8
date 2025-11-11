@@ -1,13 +1,17 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import PropertyCard from '../components/properties/PropertyCard';
 import PropertyFilters from '../components/properties/PropertyFilters';
 import { propertyService } from '../services/propertyService';
+import { getUserRecommendations } from '../services/recommendations';
 import { FaSpinner } from 'react-icons/fa';
 import './Properties.css';
 
 function Properties() {
   const { state, dispatch } = useAppContext();
+  const [recommended, setRecommended] = useState([]);
+  const [loadingRecs, setLoadingRecs] = useState(false);
+  const [recsError, setRecsError] = useState(null);
 
   const loadProperties = useCallback(async (page = 1, filters = {}) => {
     dispatch({ type: 'SET_LOADING', payload: true });
@@ -39,6 +43,27 @@ function Properties() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
+
+  const userId = '6'; // Reemplaza con el ID del usuario autenticado si es necesario
+    useEffect(() => {
+    // si en algún momento quieres atar esto a Auth0, acá cambiarías userId
+    const fetchRecs = async () => {
+      try {
+        setLoadingRecs(true);
+        setRecsError(null);
+        const recs = await getUserRecommendations(userId);
+        setRecommended(Array.isArray(recs) ? recs : []);
+      } catch (err) {
+        console.error('Error cargando recomendaciones:', err);
+        setRecsError('No se pudieron cargar las recomendaciones');
+      } finally {
+        setLoadingRecs(false);
+      }
+    };
+
+    fetchRecs();
+  }, [userId]);
+
 
 
   // Para la paginación del servidor, mostramos todas las propiedades cargadas
@@ -76,6 +101,28 @@ function Properties() {
           <h1>Propiedades Disponibles</h1>
           <p>Encuentra tu hogar ideal entre nuestras {Array.isArray(state.properties) ? state.properties.length : 0} propiedades</p>
         </div>
+        <section className="recommended-section" style={{ marginBottom: '1.5rem' }}>
+          <h2>Recomendado para ti</h2>
+
+          {loadingRecs && <p>Cargando recomendaciones...</p>}
+
+          {recsError && <p style={{ color: 'red' }}>{recsError}</p>}
+
+          {!loadingRecs && !recsError && recommended.length === 0 && (
+            <p>No hay recomendaciones disponibles todavía.</p>
+          )}
+
+          {!loadingRecs && recommended.length > 0 && (
+            <div className="properties-grid">
+              {recommended.map((property) => (
+                <PropertyCard
+                  key={property.id}
+                  property={property}
+                />
+              ))}
+            </div>
+          )}
+        </section>
 
         <PropertyFilters />
 
