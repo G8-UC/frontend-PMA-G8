@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './WebpayStatus.css';
+import authService from '../services/authService';
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -24,8 +25,18 @@ export default function WebpayStatus() {
     const fetchStatus = async () => {
       try {
         setLoading(true);
-        const API_BASE = process.env.REACT_APP_API_URL || 'https://api.ics2173-2025-2-paurovira.me/api/v1';
-        const res = await fetch(`${API_BASE}/webpay/status?token_ws=${encodeURIComponent(token)}`);
+        const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+        // Añadir Authorization header con el access token del usuario logeado (Auth0)
+        const userToken = authService.getAccessToken && authService.getAccessToken();
+        const headers = {
+          'Accept': 'application/json',
+          ...(userToken ? { 'Authorization': `Bearer ${userToken}` } : {}),
+        };
+
+        const res = await fetch(`${API_BASE}/webpay/status?token_ws=${encodeURIComponent(token)}`, {
+          method: 'GET',
+          headers,
+        });
         if (!res.ok) {
           const txt = await res.text().catch(() => null);
           throw new Error(txt || `Error ${res.status}`);
