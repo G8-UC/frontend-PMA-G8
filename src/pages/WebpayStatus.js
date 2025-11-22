@@ -25,7 +25,7 @@ export default function WebpayStatus() {
     const fetchStatus = async () => {
       try {
         setLoading(true);
-        const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+        const API_BASE = 'https://ec2.ics2173-2025-2-paurovira.me/api/v1';
         // Añadir Authorization header con el access token del usuario logeado (Auth0)
         const userToken = authService.getAccessToken && authService.getAccessToken();
         const headers = {
