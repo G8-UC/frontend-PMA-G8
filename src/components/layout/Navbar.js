@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
+import { useAuth } from '../../context/Auth0Context';
 import { FaHome, FaBuilding, FaUser, FaSignInAlt, FaSignOutAlt, FaBars, FaTimes } from 'react-icons/fa';
 import './Navbar.css';
 
 function Navbar() {
-  const { user, isAuthenticated, isLoading, logout } = useAuth0();
+  // Preferir el wrapper local para mantener la configuración (logoutParams) centralizada
+  const { user, isAuthenticated, isLoading } = useAuth0();
+  const { logout: logoutFromContext } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -15,7 +18,18 @@ function Navbar() {
   };
 
   const handleLogout = () => {
-    logout();
+    // Usar el logout definido en Auth0Context (ya maneja returnTo)
+    try {
+      logoutFromContext();
+    } catch (err) {
+      // Fallback: registrar y redirigir a la página de inicio
+      console.error('Logout failed:', err);
+      try {
+        window.location.href = '/';
+      } catch (e) {
+        // nothing else we can do
+      }
+    }
   };
 
   const isActive = (path) => {
