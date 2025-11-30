@@ -5,6 +5,7 @@ import { usePurchaseRequests } from '../hooks/usePurchaseRequests';
 import { FaMapMarkerAlt, FaCalendarAlt, FaSpinner, FaHome, FaFilter, FaSearch, FaChevronLeft, FaChevronRight, FaCheckCircle, FaTimesCircle, FaClock, FaExclamationTriangle } from 'react-icons/fa';
 import LoadingScreen from '../components/common/LoadingScreen';
 import './MyRentals.css';
+import { createOffer } from '../services/auctionService';
 import ReceiptButton from '../components/common/ReceiptButton';
 
 function MyRentals() {
@@ -119,6 +120,29 @@ function MyRentals() {
   };
 
   const stats = getStatusStats();
+  const [auctionMsg, setAuctionMsg] = useState('');
+
+  const publishAuction = async (request) => {
+    const qty = 1; // cantidad a subastar (ajustable según negocio)
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+    const fallbackUrl = request.property_name && request.property_location
+      ? `${origin}/properties/detail/${encodeURIComponent(request.property_name)}/${encodeURIComponent(request.property_location)}`
+      : `${origin}/properties`;
+    const url = request.property_url || fallbackUrl;
+    const groupId = 'group-8'; // grupo 8
+    const payloadDesc = `grupo=${groupId}, qty=${qty}, url=${url}`;
+    try {
+      const ev = await createOffer({ quantity: qty, url, groupId });
+      setAuctionMsg(`Subasta creada: ${ev.auction_id} (${payloadDesc})`);
+    } catch (err) {
+      const status = err?.response?.status;
+      const backendMsg = err?.response?.data?.error;
+      const networkMsg = err?.message === 'Network Error' ? 'No se pudo conectar con el API' : undefined;
+      setAuctionMsg(
+        `Error al publicar subasta: ${backendMsg || networkMsg || 'desconocido'} (${payloadDesc})${status ? ` [HTTP ${status}]` : ''}`
+      );
+    }
+  };
 
   if (authLoading) {
     return <LoadingScreen />;
@@ -214,6 +238,11 @@ function MyRentals() {
 
         {/* Lista de solicitudes */}
         <div className="rentals-content">
+          {auctionMsg && (
+            <div className="info-banner" style={{ marginBottom: 12 }}>
+              {auctionMsg}
+            </div>
+          )}
           {loading ? (
             <div className="loading-state">
               <FaSpinner className="spinner" />
@@ -331,14 +360,27 @@ function MyRentals() {
                     </div>
 
                     <div className="rental-actions">
-                      <Link 
-                        to={request.property_url} 
-                        className="btn btn-outline btn-sm"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Ver Propiedad
-                      </Link>
+                      {request.property_url ? (
+                        <a
+                          href={request.property_url}
+                          className="btn btn-outline btn-sm"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Ver Propiedad
+                        </a>
+                      ) : (
+                        <a
+                          href={request.property_name && request.property_location 
+                                ? `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'}/properties/detail/${encodeURIComponent(request.property_name)}/${encodeURIComponent(request.property_location)}`
+                                : `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'}/properties`}
+                          className="btn btn-outline btn-sm"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Ver Propiedad
+                        </a>
+                      )}
                        {['VALIDATED', 'ACCEPTED'].includes(request.status) && (
                          <div style={{ marginLeft: 8 }}>
                            <ReceiptButton
@@ -346,6 +388,13 @@ function MyRentals() {
                              status={request.status}
                              onSuccess={(url) => console.log('Boleta lista:', url)}
                            />
+                            <button 
+                              className="btn btn-primary btn-sm" 
+                              style={{ marginLeft: 8 }}
+                              onClick={() => publishAuction(request)}
+                            >
+                              Publicar Subasta (admin)
+                            </button>
                          </div>
                        )}
                     </div>

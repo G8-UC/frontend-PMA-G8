@@ -77,6 +77,16 @@ function Navbar() {
                 <span>Propiedades</span>
               </Link>
             </li>
+            <li className="nav-item">
+              <Link 
+                to="/auctions" 
+                className={`nav-link ${isActive('/auctions') ? 'active' : ''}`}
+                onClick={closeMobileMenu}
+              >
+                <FaBuilding className="nav-icon" />
+                <span>Subastas</span>
+              </Link>
+            </li>
             {isAuthenticated && (
               <li className="nav-item">
                 <Link 

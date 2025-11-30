@@ -1,3 +1,48 @@
+## Auction API (Server)
+
+This repo now includes a minimal Express API under `server/` implementing the required auction endpoints:
+
+- `POST /api/v1/auctions/offer` (admin)
+- `POST /api/v1/auctions/proposal` (admin)
+- `POST /api/v1/auctions/accept` (admin)
+- `POST /api/v1/auctions/reject` (admin)
+- `GET /api/v1/auctions/offers` (public, paginated)
+- `GET /api/v1/auctions/{auction_id}` (public)
+- `POST /api/v1/purchase-requests` (currently public per spec note)
+- `GET /api/v1/properties` and `GET /api/v1/properties/detail/{name}/{location}` (mock data)
+- `GET /api/v1/health`
+
+Admin validation is via header `X-Role: admin` (RNF06). Optionally include `X-Group-Id` for group attribution.
+
+### Run on Windows PowerShell
+
+1. Install deps:
+
+```
+npm install
+npm install express cors morgan uuid node-fetch
+```
+
+2. Start server:
+
+```
+npm run api:start
+```
+
+3. Dev with auto-reload:
+
+```
+npm run api:dev
+```
+
+4. Seed and test (with server running):
+
+```
+npm run api:test
+```
+
+The server listens on `http://localhost:4000`.
+
 # PropertyRental Frontend
 
 Aplicación React para gestión de propiedades con autenticación Auth0. Para acceder a la versión demo en línea, ingrese a [PropertyMarket](https://www.ics2173-2025-2-paurovira.me)
