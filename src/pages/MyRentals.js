@@ -5,7 +5,7 @@ import { usePurchaseRequests } from '../hooks/usePurchaseRequests';
 import { FaMapMarkerAlt, FaCalendarAlt, FaSpinner, FaHome, FaFilter, FaSearch, FaChevronLeft, FaChevronRight, FaCheckCircle, FaTimesCircle, FaClock, FaExclamationTriangle } from 'react-icons/fa';
 import LoadingScreen from '../components/common/LoadingScreen';
 import './MyRentals.css';
-import { createOffer } from '../services/auctionService';
+import { auctionService } from '../services/auctionService';
 import ReceiptButton from '../components/common/ReceiptButton';
 
 function MyRentals() {
@@ -132,7 +132,7 @@ function MyRentals() {
     const groupId = 'group-8'; // grupo 8
     const payloadDesc = `grupo=${groupId}, qty=${qty}, url=${url}`;
     try {
-      const ev = await createOffer({ quantity: qty, url, groupId });
+      const ev = await auctionService.createOffer(url, qty);
       setAuctionMsg(`Subasta creada: ${ev.auction_id} (${payloadDesc})`);
     } catch (err) {
       const status = err?.response?.status;

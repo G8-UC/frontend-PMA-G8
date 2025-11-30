@@ -1,42 +1,162 @@
 import axios from 'axios';
 
-// Auto-detect API base including versioned prefix to avoid 404s
-// Default to http://<host>:8000/api/v1 unless REACT_APP_API_URL is provided
-const defaultHost = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-const rawBase = process.env.REACT_APP_API_URL || `http://${defaultHost}:8000`;
-const API_BASE = `${rawBase.replace(/\/$/, '')}/api/v1`;
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://api.ics2173-2025-2-paurovira.me/api/v1';
 
-const adminHeaders = (groupId) => ({
-  'X-Role': 'admin',
-  ...(groupId ? { 'X-Group-Id': groupId } : {})
-});
+class AuctionService {
+  async getAuthHeaders() {
+    const headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    };
+    
+    if (window.auth0Client && window.auth0Client.getAccessTokenSilently) {
+      try {
+        const token = await window.auth0Client.getAccessTokenSilently();
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        }
+      } catch (error) {
+        console.log('Could not get Auth0 token:', error);
+      }
+    }
+    
+    return headers;
+  }
 
-export const listOffers = async (page = 1, limit = 10) => {
-  const { data } = await axios.get(`${API_BASE}/auctions/offers`, { params: { page, limit } });
-  return data;
-};
+  // GET /admin/reserved-visits
+  async getReservedVisits(availableOnly = true) {
+    const headers = await this.getAuthHeaders();
+    const response = await axios.get(`${API_BASE_URL}/admin/reserved-visits`, { 
+      headers, 
+      params: { available_only: availableOnly },
+      timeout: 10000 
+    });
+    return response.data?.visits || [];
+  }
 
-export const getAuction = async (auctionId) => {
-  const { data } = await axios.get(`${API_BASE}/auctions/${auctionId}`);
-  return data;
-};
+  // GET /admin/auctions/offers
+  async getMyOffers(statusFilter = null) {
+    const headers = await this.getAuthHeaders();
+    const params = statusFilter ? { status_filter: statusFilter } : {};
+    const response = await axios.get(`${API_BASE_URL}/admin/auctions/offers`, { 
+      headers, 
+      params,
+      timeout: 10000 
+    });
+    return response.data?.auctions || [];
+  }
 
-export const createOffer = async ({ quantity, url, groupId }) => {
-  const { data } = await axios.post(`${API_BASE}/auctions/offer`, { quantity, url }, { headers: adminHeaders(groupId) });
-  return data;
-};
+  // POST /admin/auctions/offers
+  async createOffer(propertyUrl, quantity = 1) {
+    const headers = await this.getAuthHeaders();
+    const response = await axios.post(
+      `${API_BASE_URL}/admin/auctions/offers`,
+      { url: propertyUrl, quantity },
+      { headers, timeout: 10000 }
+    );
+    return response.data;
+  }
 
-export const createProposal = async ({ auction_id, quantity, url, groupId }) => {
-  const { data } = await axios.post(`${API_BASE}/auctions/proposal`, { auction_id, quantity, url }, { headers: adminHeaders(groupId) });
-  return data;
-};
+  // DELETE /admin/auctions/offers/{auction_id}
+  async cancelOffer(auctionId) {
+    const headers = await this.getAuthHeaders();
+    const response = await axios.delete(
+      `${API_BASE_URL}/admin/auctions/offers/${auctionId}`,
+      { headers, timeout: 10000 }
+    );
+    return response.data;
+  }
 
-export const acceptProposal = async ({ auction_id, proposal_id, groupId }) => {
-  const { data } = await axios.post(`${API_BASE}/auctions/accept`, { auction_id, proposal_id }, { headers: adminHeaders(groupId) });
-  return data;
-};
+  // GET /admin/auctions/external
+  async getExternalOffers(statusFilter = 'active') {
+    const headers = await this.getAuthHeaders();
+    const response = await axios.get(`${API_BASE_URL}/admin/auctions/external`, { 
+      headers, 
+      params: { status_filter: statusFilter },
+      timeout: 10000 
+    });
+    return response.data?.auctions || [];
+  }
 
-export const rejectProposal = async ({ auction_id, proposal_id, groupId }) => {
-  const { data } = await axios.post(`${API_BASE}/auctions/reject`, { auction_id, proposal_id }, { headers: adminHeaders(groupId) });
-  return data;
-};
+  // GET /admin/auctions/proposals/received
+  async getReceivedProposals(statusFilter = null) {
+    const headers = await this.getAuthHeaders();
+    const params = statusFilter ? { status_filter: statusFilter } : {};
+    const response = await axios.get(`${API_BASE_URL}/admin/auctions/proposals/received`, { 
+      headers, 
+      params,
+      timeout: 10000 
+    });
+    return response.data?.auctions || [];
+  }
+
+  // GET /admin/auctions/proposals/sent
+  async getSentProposals(statusFilter = null) {
+    const headers = await this.getAuthHeaders();
+    const params = statusFilter ? { status_filter: statusFilter } : {};
+    const response = await axios.get(`${API_BASE_URL}/admin/auctions/proposals/sent`, { 
+      headers, 
+      params,
+      timeout: 10000 
+    });
+    return response.data?.auctions || [];
+  }
+
+  // POST /admin/auctions/proposals
+  async createProposal(auctionId, propertyUrl, quantity = 1) {
+    const headers = await this.getAuthHeaders();
+    const response = await axios.post(
+      `${API_BASE_URL}/admin/auctions/proposals`,
+      { 
+        auction_id: auctionId, 
+        url: propertyUrl,  // URL de nuestra propiedad que ofrecemos
+        quantity 
+      },
+      { headers, timeout: 10000 }
+    );
+    return response.data;
+  }
+
+  // POST /admin/auctions/proposals/{proposal_id}/accept?auction_id={auction_id}
+  async acceptProposal(proposalId, auctionId) {
+    const headers = await this.getAuthHeaders();
+    const response = await axios.post(
+      `${API_BASE_URL}/admin/auctions/proposals/${proposalId}/accept`,
+      {},
+      { 
+        headers, 
+        params: { auction_id: auctionId },
+        timeout: 10000 
+      }
+    );
+    return response.data;
+  }
+
+  // POST /admin/auctions/proposals/{proposal_id}/reject?auction_id={auction_id}
+  async rejectProposal(proposalId, auctionId) {
+    const headers = await this.getAuthHeaders();
+    const response = await axios.post(
+      `${API_BASE_URL}/admin/auctions/proposals/${proposalId}/reject`,
+      {},
+      { 
+        headers, 
+        params: { auction_id: auctionId },
+        timeout: 10000 
+      }
+    );
+    return response.data;
+  }
+
+  // GET /admin/auctions/events
+  async getAuctionEvents(limit = 50) {
+    const headers = await this.getAuthHeaders();
+    const response = await axios.get(`${API_BASE_URL}/admin/auctions/events`, {
+      headers,
+      params: { limit },
+      timeout: 10000
+    });
+    return response.data || [];
+  }
+}
+
+export const auctionService = new AuctionService();
