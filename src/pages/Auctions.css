@@ -180,12 +180,8 @@
   }
   
   @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
   }
   
   /* Cards Grid */
@@ -377,7 +373,7 @@
     background: rgba(255, 107, 107, 0.3);
   }
   
-  /* Visits list */
+  /* Visits list - CORREGIDO */
   .visits-list {
     display: flex;
     flex-direction: column;
@@ -388,14 +384,16 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 1.5rem;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 10px;
-    transition: background 0.3s ease;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 240, 255, 0.95) 100%);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
   
   .visit-item:hover {
-    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
   }
   
   .visit-info {
@@ -403,16 +401,33 @@
   }
   
   .visit-name {
-    color: white;
-    font-weight: 600;
-    margin-bottom: 0.2rem;
+    color: #1a1a2e;
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 0.4rem;
   }
   
-  .visit-location,
-  .visit-price,
+  .visit-location {
+    color: #4a4a6a;
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+  }
+  
+  .visit-price {
+    color: #667eea;
+    font-weight: 600;
+    font-size: 1.05rem;
+    margin-bottom: 0.3rem;
+  }
+  
   .visit-qty {
-    color: rgba(255, 255, 255, 0.6);
+    color: #00b894;
     font-size: 0.85rem;
+    font-weight: 600;
+    background: rgba(0, 184, 148, 0.1);
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    display: inline-block;
   }
   
   /* Proposals list */
@@ -511,31 +526,14 @@
     border: 2px solid #1a1a2e;
   }
   
-  .event-item.offer_created .event-dot {
-    background: #00b894;
-  }
-  
-  .event-item.offer_received .event-dot {
-    background: #667eea;
-  }
-  
-  .event-item.proposal_sent .event-dot {
-    background: #f093fb;
-  }
-  
-  .event-item.proposal_received .event-dot {
-    background: #fdcb6e;
-  }
-  
+  .event-item.offer_created .event-dot { background: #00b894; }
+  .event-item.offer_received .event-dot { background: #667eea; }
+  .event-item.proposal_sent .event-dot { background: #f093fb; }
+  .event-item.proposal_received .event-dot { background: #fdcb6e; }
   .event-item.acceptance_sent .event-dot,
-  .event-item.acceptance_received .event-dot {
-    background: #2ed573;
-  }
-  
+  .event-item.acceptance_received .event-dot { background: #2ed573; }
   .event-item.rejection_sent .event-dot,
-  .event-item.rejection_received .event-dot {
-    background: #ff6b6b;
-  }
+  .event-item.rejection_received .event-dot { background: #ff6b6b; }
   
   .event-content {
     color: white;
@@ -627,10 +625,11 @@
   }
   
   .selected-item {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.08);
     border-radius: 10px;
     padding: 1rem;
     margin-bottom: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
   
   .selected-item h4 {
@@ -662,6 +661,7 @@
     display: block;
     color: rgba(255, 255, 255, 0.8);
     margin-bottom: 0.5rem;
+    font-weight: 500;
   }
   
   .form-group input {
@@ -678,6 +678,7 @@
   .form-group input:focus {
     outline: none;
     border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
   }
   
   .form-group .hint {
@@ -694,23 +695,28 @@
   
   .visit-option {
     padding: 1rem;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.08);
     border-radius: 8px;
     margin-bottom: 0.5rem;
     cursor: pointer;
-    transition: background 0.3s ease;
+    transition: all 0.3s ease;
     border: 1px solid transparent;
   }
   
   .visit-option:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.12);
     border-color: rgba(102, 126, 234, 0.5);
   }
   
   .visit-option p {
     margin: 0.2rem 0;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.9);
     font-size: 0.9rem;
+  }
+  
+  .visit-option p:first-child {
+    color: white;
+    font-weight: 600;
   }
   
   .btn-secondary,
@@ -725,6 +731,7 @@
     border-radius: 8px;
     cursor: pointer;
     font-size: 0.95rem;
+    font-weight: 500;
     transition: all 0.3s ease;
   }
   
@@ -744,6 +751,7 @@
   
   .btn-primary:hover:not(:disabled) {
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    transform: translateY(-1px);
   }
   
   .btn-primary:disabled {
@@ -770,6 +778,10 @@
       font-size: 0.75rem;
     }
   
+    .tab-button span:last-child {
+      display: none;
+    }
+  
     .cards-grid {
       grid-template-columns: 1fr;
     }
@@ -778,6 +790,7 @@
       flex-direction: column;
       gap: 1rem;
       align-items: stretch;
+      text-align: center;
     }
   
     .btn-offer {
